@@ -1,4 +1,7 @@
+open Document
+
 let main () =
-  print_endline "hello"
+  let d = !^ "hello" ^^ !^ "world" in
+  print_endline (to_string d)
 
 ;;main ()

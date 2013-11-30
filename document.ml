@@ -1,0 +1,51 @@
+type t =
+  | Empty
+  | Leaf of Atom.t
+  | Node of t * t
+
+let empty : t = Empty
+
+let string (s : string) : t =
+  Leaf (Atom.String s)
+
+let (!^) = string
+
+let space : t = Leaf Atom.Space
+
+let new_line : t = Leaf Atom.NewLine
+
+let concat (d1 : t) (d2 : t) : t =
+  Node (d1, d2)
+
+let (^-^) = concat
+
+let concat_with_space (d1 : t) (d2 : t) : t =
+  concat d1 (concat space d2)
+
+let (^^) = concat_with_space
+
+let flatten (d : t) : Atom.t list =
+  let rec aux (d : t) (l : Atom.t list) : Atom.t list =
+    match d with
+    | Empty -> l
+    | Leaf a ->
+      (match l with
+      | [] -> [a]
+      | a' :: l -> Atom.concat a a' @ l)
+    | Node (d1, d2) -> aux d1 (aux d2 l) in
+  aux d []
+
+let nest_one (i : int) (d : t) : t =
+  Leaf (Atom.GroupOne (i, flatten d))
+
+let nest_all (i : int) (d : t) : t =
+  Leaf (Atom.GroupAll (i, flatten d))
+
+let group_one (d : t) : t =
+  nest_one 0 d
+
+let group_all (d : t) : t =
+  nest_all 0 d
+
+let to_string (d : t) : string =
+  Atom.to_string (Atom.GroupOne (0, flatten d))
