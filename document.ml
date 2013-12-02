@@ -47,7 +47,10 @@ let group (d : t) : t =
 let group_all (d : t) : t =
   nest_all 0 d
 
+let parens (d : t) : t =
+  !^ "(" ^-^ d ^-^ !^ ")"
+
 let to_string (d : t) : string =
   let a = Atom.GroupOne (0, flatten d) in
-  let (a, _) = Atom.eval 80 0 a 0 in
+  let (a, _) = Atom.eval 20 0 a 0 in
   Atom.to_string a
