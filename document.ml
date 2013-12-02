@@ -48,5 +48,6 @@ let group_all (d : t) : t =
   nest_all 0 d
 
 let to_string (d : t) : string =
-  Atom.to_string (Atom.GroupOne (0, flatten d))
-  (*Atom.try_eval_spaces_flat (Atom.GroupOne (0, flatten d))*)
+  let a = Atom.GroupOne (0, flatten d) in
+  ignore @@ Atom.try_eval_spaces_flat 80 0 a 0;
+  Atom.to_string a

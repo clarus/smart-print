@@ -20,29 +20,28 @@ end*)
 
 exception CannotBeFlat
 
-(** We suppose [p] < [width] for the input and the output. *)
-let rec try_eval_spaces_flat (width : int) (a : t) (p : int) : t * int =
+(** We suppose [p] < [width] for the input. Try to evaluate all spaces as
+    spaces keeping [p] < [width]. *)
+let rec try_eval_spaces_flat (width : int) (i : int) (a : t) (p : int) : int =
   let try_return size =
-    if p + size >= width
+    let p = (if p = 0 then p + i + size else p + size) in
+    if p >= width
     then raise CannotBeFlat
-    else (a, p + size) in
-  let try_return_group _as group =
-    let (_as, p) = try_eval_spaces_flat_list width _as p in
-    (group _as, p) in
+    else p in
   match a with
   | String s -> try_return (String.length s)
   | Space -> try_return 1
-  | NewLine -> raise CannotBeFlat
-  | GroupOne (i, _as) -> try_return_group _as (fun _as -> GroupOne (i, _as))
-  | GroupAll (i, _as) -> try_return_group _as (fun _as -> GroupAll (i, _as))
+  | NewLine -> 0
+  | GroupOne (i', _as) | GroupAll (i', _as) ->
+    try_eval_spaces_flat_list width (i + i') _as p
 
-and try_eval_spaces_flat_list (width : int) (_as : t list) (p : int) : t list * int =
+and try_eval_spaces_flat_list (width : int) (i : int) (_as : t list) (p : int) : int =
   match _as with
-  | [] -> ([], p)
+  | [] -> p
   | a :: _as ->
-    let (a, p) = try_eval_spaces_flat width a p in
-    let (_as, p) = try_eval_spaces_flat_list width _as p in
-    (a :: _as, p)
+    let p = try_eval_spaces_flat width i a p in
+    let p = try_eval_spaces_flat_list width i _as p in
+    p
 
 (*let eval_spaces (width : int) (a : t) : t list =
   let rec aux (_as : t list) (p : int) (m : Mode.t) : (t list * int) option =
