@@ -14,7 +14,7 @@ let rec pp (paren : bool) (e : t) : Document.t =
   | Var x -> !^ x
   | App (e1, e2) -> group (if_parens (pp true e1 ^^ nest 2 @@ pp true e2))
   | Fun (x, e) -> group (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ nest 2 @@ pp false e))
-  | Tuple es -> group_all @@ parens @@ separate (space ^^ !^ "," ^^ space) (es |> List.map (fun e -> nest 2 @@ pp false e ^^ space))
+  | Tuple es -> group_all @@ parens @@ separate (!^ "," ^^ space) (es |> List.map (fun e -> nest 2 @@ pp false e))
   | Let _ -> failwith "TODO"
 
 let es = [

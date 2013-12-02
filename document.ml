@@ -24,17 +24,6 @@ let concat_with_space (d1 : t) (d2 : t) : t =
 
 let (^^) = concat_with_space
 
-(*let flatten (d : t) : Atom.t list =
-  let rec aux (d : t) (l : Atom.t list) : Atom.t list =
-    match d with
-    | Empty -> l
-    | Leaf a ->
-      (match l with
-      | [] -> [a]
-      | a' :: l -> Atom.concat a a' @ l)
-    | Node (d1, d2) -> aux d1 (aux d2 l) in
-  aux d []*)
-
 let flatten (d : t) : Atom.t list =
   let rec aux (d : t) (l : Atom.t list) : Atom.t list =
     match d with
@@ -69,6 +58,11 @@ let separate (separator : t) (ds : t list) : t =
   match ds with
   | [] -> empty
   | d :: ds -> d ^-^ aux ds
+
+module OCaml = struct
+  let int (i : int) : t =
+    !^ (string_of_int i)
+end
 
 let to_string (d : t) : string =
   Atom.to_string (Atom.render 20 @@ flatten d)

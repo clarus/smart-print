@@ -27,6 +27,8 @@ let rec merge_breaks (_as : t list) : t list =
   match _as with
   | [] -> _as
   | Break b1 :: Break b2 :: _as -> merge_breaks (Break (Break.merge b1 b2) :: _as)
+  | GroupOne (i, _as') :: _as -> GroupOne (i, merge_breaks _as') :: merge_breaks _as
+  | GroupAll (i, _as') :: _as -> GroupAll (i, merge_breaks _as') :: merge_breaks _as
   | a :: _as -> a :: merge_breaks _as
 
 exception Overflow
@@ -101,7 +103,8 @@ and eval_list_all (width : int) (i : int) (_as : t list) (p : int) : t list * in
 let render (width : int) (_as : t list) : t =
   let (previous_breaks, _as, next_breaks) = squeeze_breaks _as in
   let lift = List.map (fun b -> Break b) in
-  let _as = merge_breaks (lift previous_breaks @ _as @ lift next_breaks) in
+  let _as = lift previous_breaks @ _as @ lift next_breaks in
+  let _as = merge_breaks _as in
   fst @@ eval width 0 (GroupOne (0, _as)) 0
 
 (** Write in a buffer the contents of an atom where all breaks have been evaluated. *)
