@@ -1,3 +1,9 @@
+module Break = struct
+  type t =
+    | Space
+    | NewLine
+end
+
 type t =
   | String of string
   | Break of Break.t
@@ -26,7 +32,10 @@ let rec squeeze_breaks (_as : t list) : Break.t list * t list * Break.t list =
 let rec merge_breaks (_as : t list) : t list =
   match _as with
   | [] -> _as
-  | Break b1 :: Break b2 :: _as -> merge_breaks (Break (Break.merge b1 b2) :: _as)
+  | (Break Break.NewLine as a1) :: (Break Break.NewLine as a2) :: _as ->
+    a1 :: merge_breaks (a2 :: _as)
+  | Break Break.Space :: Break b2 :: _as -> merge_breaks (Break b2 :: _as)
+  | Break b1 :: Break Break.Space :: _as -> merge_breaks (Break b1 :: _as)
   | GroupOne (i, _as') :: _as -> GroupOne (i, merge_breaks _as') :: merge_breaks _as
   | GroupAll (i, _as') :: _as -> GroupAll (i, merge_breaks _as') :: merge_breaks _as
   | a :: _as -> a :: merge_breaks _as

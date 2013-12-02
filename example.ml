@@ -22,7 +22,7 @@ let es = [
   App (Var "f", Var "x");
   App (Var "fdsgoklkmeee", Var "xdsgsdg");
   Fun ("x", App (Var "fdsgo", App (Var "x", Var "xdsgsdg")));
-  Fun ("x", App (Var "fdsgo", App (Var "xffd", Var "xdsgsdg")));
+  Fun ("x", App (Var "fdsgvbcvvfo", App (Var "xffd", Var "xdsgsdg")));
   Tuple [];
   Tuple [Var "x"; Var "y"];
   Tuple (List.map (fun x -> Var x) ["kjh"; "lj"; "iop"; "rt"; "vbn"; "hjk"; "gkgytuuhi"]);

@@ -10,9 +10,9 @@ let string (s : string) : t =
 
 let (!^) = string
 
-let space : t = Leaf (Atom.Break Break.Space)
+let space : t = Leaf (Atom.Break Atom.Break.Space)
 
-let new_line : t = Leaf (Atom.Break Break.NewLine)
+let new_line : t = Leaf (Atom.Break Atom.Break.NewLine)
 
 let append (d1 : t) (d2 : t) : t =
   Node (d1, d2)
