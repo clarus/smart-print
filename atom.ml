@@ -50,7 +50,7 @@ let rec eval (width : int) (i : int) (a : t) (p : int) : t * int =
 
 and try_eval_flat (width : int) (i : int) (a : t) (p : int) : t * int =
   let try_return (a, p) =
-    if p >= width then
+    if p > width then
       raise Overflow
     else
       (a, p) in

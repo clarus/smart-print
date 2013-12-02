@@ -1,9 +1,11 @@
 open Document
 
 let print_document (d : Document.t) : unit =
-  print_endline (String.make 20 '*');
-  let a = Atom.render 20 @@ flatten d in
+  let width = 25 in
+  let a = Atom.render width @@ flatten d in
+  print_endline (String.make width '*');
   print_endline @@ Atom.to_string @@ Atom.render 160 @@ flatten @@ Debug.pp a;
+  print_endline (String.make width '*');
   print_endline @@ Atom.to_string a
 
 let main () =
