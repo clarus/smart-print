@@ -10,21 +10,21 @@ let string (s : string) : t =
 
 let (!^) = string
 
-let space : t = Leaf Atom.Space
+let space : t = Leaf (Atom.Break Break.Space)
 
-let new_line : t = Leaf Atom.NewLine
+let new_line : t = Leaf (Atom.Break Break.NewLine)
 
-let concat (d1 : t) (d2 : t) : t =
+let append (d1 : t) (d2 : t) : t =
   Node (d1, d2)
 
-let (^-^) = concat
+let (^-^) = append
 
 let concat_with_space (d1 : t) (d2 : t) : t =
-  concat d1 (concat space d2)
+  d1 ^-^ space ^-^ d2
 
 let (^^) = concat_with_space
 
-let flatten (d : t) : Atom.t list =
+(*let flatten (d : t) : Atom.t list =
   let rec aux (d : t) (l : Atom.t list) : Atom.t list =
     match d with
     | Empty -> l
@@ -32,6 +32,14 @@ let flatten (d : t) : Atom.t list =
       (match l with
       | [] -> [a]
       | a' :: l -> Atom.concat a a' @ l)
+    | Node (d1, d2) -> aux d1 (aux d2 l) in
+  aux d []*)
+
+let flatten (d : t) : Atom.t list =
+  let rec aux (d : t) (l : Atom.t list) : Atom.t list =
+    match d with
+    | Empty -> l
+    | Leaf a -> a :: l
     | Node (d1, d2) -> aux d1 (aux d2 l) in
   aux d []
 
@@ -50,7 +58,17 @@ let group_all (d : t) : t =
 let parens (d : t) : t =
   !^ "(" ^-^ d ^-^ !^ ")"
 
+let concat (ds : t list) : t =
+  List.fold_left append empty ds
+
+let separate (separator : t) (ds : t list) : t =
+  let rec aux ds =
+    match ds with
+    | [] -> empty
+    | d :: ds -> separator ^-^ d ^-^ aux ds in
+  match ds with
+  | [] -> empty
+  | d :: ds -> d ^-^ aux ds
+
 let to_string (d : t) : string =
-  let a = Atom.GroupOne (0, flatten d) in
-  let (a, _) = Atom.eval 20 0 a 0 in
-  Atom.to_string a
+  Atom.to_string (Atom.render 20 @@ flatten d)
