@@ -49,5 +49,5 @@ let group_all (d : t) : t =
 
 let to_string (d : t) : string =
   let a = Atom.GroupOne (0, flatten d) in
-  ignore @@ Atom.try_eval_spaces_flat 80 0 a 0;
+  let (a, _) = Atom.eval 80 0 a 0 in
   Atom.to_string a
