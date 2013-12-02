@@ -35,17 +35,18 @@ let flatten (d : t) : Atom.t list =
     | Node (d1, d2) -> aux d1 (aux d2 l) in
   aux d []
 
-let nest_one (i : int) (d : t) : t =
+let nest (i : int) (d : t) : t =
   Leaf (Atom.GroupOne (i, flatten d))
 
 let nest_all (i : int) (d : t) : t =
   Leaf (Atom.GroupAll (i, flatten d))
 
-let group_one (d : t) : t =
-  nest_one 0 d
+let group (d : t) : t =
+  nest 0 d
 
 let group_all (d : t) : t =
   nest_all 0 d
 
 let to_string (d : t) : string =
   Atom.to_string (Atom.GroupOne (0, flatten d))
+  (*Atom.try_eval_spaces_flat (Atom.GroupOne (0, flatten d))*)
