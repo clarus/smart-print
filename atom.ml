@@ -18,9 +18,9 @@ let concat (a1 : t) (a2 : t) : t list =
     | All
 end*)
 
-exception OverflowAfterNbSpaces of int
+exception Overflow
 
-(*)
+(*
 (** We suppose [p] < [width] for the input. Try to evaluate all spaces as
     spaces keeping [p] < [width], else raise [CannotBeFlat]. Returns the new
     column position. *)
@@ -54,36 +54,36 @@ let rec eval (width : int) (i : int) (a : t) (p : int) : t * int =
   | Space -> (a, p + 1)
   | NewLine -> (a, 0)
   | GroupOne (i', _as) ->
-    let (_as, p) = try try_eval_list_flat width (i + i') _as p 0 with
-      | OverflowAfterNbSpaces _ -> eval_list_all width i _as p in
+    let (_as, p) = try_eval_list_one width (i + i') _as p false in
     (GroupOne (i', _as), p)
   | GroupAll (i', _as) ->
-    let (_as, p) = try try_eval_list_flat width (i + i') _as p 0 with
-      | OverflowAfterNbSpaces _ -> eval_list_all width i _as p in
+    let (_as, p) = try try_eval_list_flat width (i + i') _as p with
+      | Overflow -> eval_list_all width i _as p in
     (GroupAll (i', _as), p)
 
-and try_eval_list_flat (width : int) (i : int) (_as : t list) (p : int) (nb_spaces : int) : t list * int =
+and try_eval_list_flat (width : int) (i : int) (_as : t list) (p : int) : t list * int =
   match _as with
   | [] -> (_as, p)
   | a :: _as ->
     let (a, p) = eval width i a p in
     if p >= width then
-      raise (OverflowAfterNbSpaces nb_spaces);
-    let nb_spaces = if a = Space then nb_spaces + 1 else nb_spaces in
-    let (_as, p) = try_eval_list_flat width i _as p nb_spaces in
+      raise Overflow;
+    let (_as, p) = try_eval_list_flat width i _as p in
     (a :: _as, p)
 
-(*and eval_list_one (width : int) (i : int) (_as : t list) (p : int) (nb_spaces : int) : t list * int =
+and try_eval_list_one (width : int) (i : int) (_as : t list) (p : int) (can_fail : bool) : t list * int =
   match _as with
   | [] -> (_as, p)
+  | Space :: _as ->
+    (try let (_as, p) = try_eval_list_one width i _as (p + 1) true in
+      (Space :: _as, p) with
+    | Overflow -> try_eval_list_one width i (NewLine :: _as) p false)
   | a :: _as ->
-    if a = Space && nb_spaces = 0 then
-      eval_list_one width i (NewLine :: _as) p (-1)
-    else
-      let (a, p) = eval width i a p in
-      let nb_spaces = if a = Space then nb_spaces - 1 else nb_spaces in
-      let (_as, p) = eval_list_one width i _as p nb_spaces in
-      (a :: _as, p)*)
+    let (a, p) = eval width i a p in
+    if can_fail && p >= width then
+      raise Overflow;
+    let (_as, p) = try_eval_list_one width i _as p can_fail in
+    (a :: _as, p)
 
 and eval_list_all (width : int) (i : int) (_as : t list) (p : int) : t list * int =
   match _as with
