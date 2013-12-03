@@ -5,7 +5,7 @@ open Atom
 (** Pretty-print an atom. *)
 let rec pp (a : Atom.t) : Document.t =
   match a with
-  | String s -> !^ "\"" ^-^ !^ s ^-^ !^ "\""
+  | String s -> OCaml.string s
   | Break Break.Space -> !^ "Space"
   | Break Break.Newline -> !^ "Newline"
   | GroupOne (i, _as) -> !^ "GroupOne" ^^ parens (OCaml.int i ^-^ !^ "," ^^ pps _as)

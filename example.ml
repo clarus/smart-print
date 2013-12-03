@@ -19,7 +19,8 @@ let rec pp (paren : bool) (e : t) : Document.t =
   | Fun (x, e) -> group (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ nest 2 @@ pp false e))
   | Let (x, e1, e2) ->
     group (!^ "let" ^^ !^ x ^^ !^ "=" ^^ nest 2 (pp false e1) ^^ !^ "in" ^^ newline ^^ pp false e2)
-  | Tuple es -> group_all @@ parens @@ separate (!^ "," ^^ space) (es |> List.map (fun e -> nest 2 @@ pp false e))
+  | Tuple es -> (*group_all @@ parens @@ separate (!^ "," ^^ space) (es |> List.map (fun e -> nest 2 @@ pp false e))*)
+    OCaml.list (pp false) es
 
 (** A sample of expressions. *)
 let es = [
