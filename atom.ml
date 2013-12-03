@@ -133,9 +133,3 @@ let to_buffer (b : Buffer.t) (a : t) : unit =
       _as |> List.iter (fun a -> b := aux a (i + i') !b);
       !b in
   ignore (aux a 0 true)
-
-(** Write an atom in a string. *)
-let to_string (a : t) : string =
-  let b = Buffer.create 10 in
-  to_buffer b a;
-  Buffer.contents b
