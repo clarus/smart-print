@@ -10,3 +10,4 @@
 *.cmxa
 *.native
 _build/
+smartPrint.docdir

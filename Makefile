@@ -3,3 +3,6 @@ default:
 
 clean:
 	ocamlbuild -clean
+
+doc:
+	ocamlbuild smartPrint.docdir/index.html

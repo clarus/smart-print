@@ -9,7 +9,7 @@ let print_document (d : Document.t) : unit =
   print_endline (String.make width '*')
 
 let main () =
-  let d = !^ "hello" ^^ !^ "world" ^^ new_line ^^ nest 2 (!^ "gre" ^^ nest_all 2 (!^ "arg" ^^ !^ "arg")) in
+  let d = !^ "hello" ^^ !^ "world" ^^ newline ^^ nest 2 (!^ "gre" ^^ nest_all 2 (!^ "arg" ^^ !^ "arg")) in
   print_document d;
   Example.es |> List.iter (fun e ->
     print_document @@ Example.pp false e)

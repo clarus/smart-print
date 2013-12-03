@@ -1,14 +1,15 @@
-module Break = struct
-  type t =
-    | Space
-    | NewLine
-end
+(** The internal representation of a document and the engine. *)
 
+(** An atom is the low-level tree describing a document. *)
 type t =
-  | String of string
-  | Break of Break.t
+  | String of string (** A non-breaking string. It should be newlines free. *)
+  | Break of Break.t (** A separator. *)
   | GroupOne of int * t list
+    (** A list of atoms at a given identation level. Only the necessary number
+        of breaks are splited. *)
   | GroupAll of int * t list
+    (** A list of atoms at a given identation level. No or all the breaks are
+        splited. *)
 
 let rec squeeze_breaks (_as : t list) : Break.t list * t list * Break.t list =
   let lift bs =
@@ -32,7 +33,7 @@ let rec squeeze_breaks (_as : t list) : Break.t list * t list * Break.t list =
 let rec merge_breaks (_as : t list) : t list =
   match _as with
   | [] -> _as
-  | (Break Break.NewLine as a1) :: (Break Break.NewLine as a2) :: _as ->
+  | (Break Break.Newline as a1) :: (Break Break.Newline as a2) :: _as ->
     a1 :: merge_breaks (a2 :: _as)
   | Break Break.Space :: Break b2 :: _as -> merge_breaks (Break b2 :: _as)
   | Break b1 :: Break Break.Space :: _as -> merge_breaks (Break b1 :: _as)
@@ -48,7 +49,7 @@ let rec eval (width : int) (i : int) (a : t) (p : int) : t * int =
     let l = String.length s in
     (a, if p = 0 then p + i + l else p + l)
   | Break Break.Space -> (a, p + 1)
-  | Break Break.NewLine -> (a, 0)
+  | Break Break.Newline -> (a, 0)
   | GroupOne (i', _as) ->
     let (_as, p) = try_eval_list_one width (i + i') _as p false in
     (GroupOne (i', _as), p)
@@ -68,7 +69,7 @@ and try_eval_flat (width : int) (i : int) (a : t) (p : int) : t * int =
     let l = String.length s in
     try_return (a, if p = 0 then p + i + l else p + l)
   | Break Break.Space -> try_return (a, p + 1)
-  | Break Break.NewLine -> (a, 0)
+  | Break Break.Newline -> (a, 0)
   | GroupOne (i', _as) ->
     let (_as, p) = try_eval_list_flat width (i + i') _as p in
     (GroupOne (i', _as), p)
@@ -90,7 +91,7 @@ and try_eval_list_one (width : int) (i : int) (_as : t list) (p : int) (can_fail
   | Break Break.Space :: _as ->
     (try let (_as, p) = try_eval_list_one width i _as (p + 1) true in
       (Break Break.Space :: _as, p) with
-    | Overflow -> try_eval_list_one width i (Break Break.NewLine :: _as) p false)
+    | Overflow -> try_eval_list_one width i (Break Break.Newline :: _as) p false)
   | a :: _as ->
     let (a, p) =
       if can_fail
@@ -103,12 +104,13 @@ and eval_list_all (width : int) (i : int) (_as : t list) (p : int) : t list * in
   match _as with
   | [] -> (_as, p)
   | Break Break.Space :: _as ->
-    eval_list_all width i (Break Break.NewLine :: _as) p
+    eval_list_all width i (Break Break.Newline :: _as) p
   | a :: _as ->
     let (a, p) = eval width i a p in
     let (_as, p) = eval_list_all width i _as p in
     (a :: _as, p)
 
+(** Squeeze, merge and evaluate the breaks with a maximal [width] per line. *)
 let render (width : int) (_as : t list) : t =
   let (previous_breaks, _as, next_breaks) = squeeze_breaks _as in
   let lift = List.map (fun b -> Break b) in
@@ -116,7 +118,7 @@ let render (width : int) (_as : t list) : t =
   let _as = merge_breaks _as in
   fst @@ eval width 0 (GroupOne (0, _as)) 0
 
-(** Write in a buffer the contents of an atom where all breaks have been evaluated. *)
+(** Write in a buffer the contents of an atom. *)
 let to_buffer (b : Buffer.t) (a : t) : unit =
   let rec aux (a : t) (i : int) (is_new_line : bool) : bool =
     match a with
@@ -125,13 +127,14 @@ let to_buffer (b : Buffer.t) (a : t) : unit =
         Buffer.add_string b (String.make i ' ');
       Buffer.add_string b s; false
     | Break Break.Space -> Buffer.add_char b ' '; false
-    | Break Break.NewLine -> Buffer.add_char b '\n'; true
+    | Break Break.Newline -> Buffer.add_char b '\n'; true
     | GroupOne (i', _as) | GroupAll (i', _as) ->
       let b = ref is_new_line in
       _as |> List.iter (fun a -> b := aux a (i + i') !b);
       !b in
   ignore (aux a 0 true)
 
+(** Write an atom in a string. *)
 let to_string (a : t) : string =
   let b = Buffer.create 10 in
   to_buffer b a;
