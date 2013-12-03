@@ -118,18 +118,26 @@ let render (width : int) (_as : t list) : t =
   let _as = merge_breaks _as in
   fst @@ eval width 0 (GroupOne (0, _as)) 0
 
-(** Write in a buffer the contents of an atom. *)
-let to_buffer (b : Buffer.t) (a : t) : unit =
-  let rec aux (a : t) (i : int) (is_new_line : bool) : bool =
+(** Write to something, given the [add_char] and [add_string] functions. *)
+let to_something (add_char : char -> unit) (add_string : string -> unit) (a : t) : unit =
+  let rec aux (a : t) (i : int) (is_newline : bool) : bool =
     match a with
     | String s ->
-      if is_new_line then
-        Buffer.add_string b (String.make i ' ');
-      Buffer.add_string b s; false
-    | Break Break.Space -> Buffer.add_char b ' '; false
-    | Break Break.Newline -> Buffer.add_char b '\n'; true
+      if is_newline then
+        add_string (String.make i ' ');
+      add_string s; false
+    | Break Break.Space -> add_char ' '; false
+    | Break Break.Newline -> add_char '\n'; true
     | GroupOne (i', _as) | GroupAll (i', _as) ->
-      let b = ref is_new_line in
+      let b = ref is_newline in
       _as |> List.iter (fun a -> b := aux a (i + i') !b);
       !b in
   ignore (aux a 0 true)
+
+(** Write in a buffer the contents of an atom. *)
+let to_buffer (b : Buffer.t) (a : t) : unit =
+  to_something (Buffer.add_char b) (Buffer.add_string b) a
+
+(** Write in a channel the contents of an atom. *)
+let to_out_channel (c : out_channel) (a : t) : unit =
+  to_something (output_char c) (output_string c) a

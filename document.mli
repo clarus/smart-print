@@ -103,3 +103,9 @@ val to_buffer : int -> Buffer.t -> t -> unit
 
 (** Render a document in a string with a maximal [width] per line. *)
 val to_string : int -> t -> string
+
+(** Render a document in an output channel with a maximal [width] per line. *)
+val to_out_channel : int -> out_channel -> t -> unit
+
+(** Render a document on [stdout] with a maximal [width] per line. *)
+val to_stdout : int -> t -> unit

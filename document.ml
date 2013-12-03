@@ -110,3 +110,9 @@ let to_string (width : int) (d : t) : string =
   let b = Buffer.create 10 in
   to_buffer width b d;
   Buffer.contents b
+
+let to_out_channel (width : int) (c : out_channel) (d : t) : unit =
+  Atom.to_out_channel c @@ Atom.render width @@ unsafe_to_atoms d
+
+let to_stdout (width : int) (d : t) : unit =
+  to_out_channel width stdout d
