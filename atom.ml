@@ -2,7 +2,9 @@
 
 (** An atom is the low-level tree describing a document. *)
 type t =
-  | String of string (** A non-breaking string. It should be newlines free. *)
+  | String of string * int * int
+    (** A non-breaking string. It should be newlines free. Represented as a
+        sub-string of an other string, with an offset and a length. *)
   | Break of Break.t (** A separator. *)
   | GroupOne of int * t list
     (** A list of atoms at a given identation level. Only the necessary number
@@ -25,7 +27,7 @@ let rec squeeze_breaks (_as : t list) : Break.t list * t list * Break.t list =
       else
         (previous_breaks', group _as' :: lift next_breaks' @ lift previous_breaks @ _as, next_breaks) in
     (match a with
-    | String s -> ([], String s :: lift previous_breaks @ _as, next_breaks)
+    | String _ as a -> ([], a :: lift previous_breaks @ _as, next_breaks)
     | Break b -> (b :: previous_breaks, _as, next_breaks)
     | GroupOne (i, _as') -> return_group (fun _as' -> GroupOne (i, _as')) _as'
     | GroupAll (i, _as') -> return_group (fun _as' -> GroupAll (i, _as')) _as')
@@ -45,9 +47,7 @@ exception Overflow
 
 let rec eval (width : int) (i : int) (a : t) (p : int) : t * int =
   match a with
-  | String s ->
-    let l = String.length s in
-    (a, if p = 0 then p + i + l else p + l)
+  | String (_, _, l) -> (a, if p = 0 then p + i + l else p + l)
   | Break Break.Space -> (a, p + 1)
   | Break Break.Newline -> (a, 0)
   | GroupOne (i', _as) ->
@@ -65,9 +65,7 @@ and try_eval_flat (width : int) (i : int) (a : t) (p : int) : t * int =
     else
       (a, p) in
   match a with
-  | String s ->
-    let l = String.length s in
-    try_return (a, if p = 0 then p + i + l else p + l)
+  | String (_, _, l) -> try_return (a, if p = 0 then p + i + l else p + l)
   | Break Break.Space -> try_return (a, p + 1)
   | Break Break.Newline -> (a, 0)
   | GroupOne (i', _as) ->
@@ -119,13 +117,15 @@ let render (width : int) (_as : t list) : t =
   fst @@ eval width 0 (GroupOne (0, _as)) 0
 
 (** Write to something, given the [add_char] and [add_string] functions. *)
-let to_something (add_char : char -> unit) (add_string : string -> unit) (a : t) : unit =
+let to_something (add_char : char -> unit) (add_sub_string : string -> int -> int -> unit) (a : t) : unit =
+  let add_string (s : string) : unit =
+    add_sub_string s 0 (String.length s) in
   let rec aux (a : t) (i : int) (is_newline : bool) : bool =
     match a with
-    | String s ->
+    | String (s, o, l) ->
       if is_newline then
         add_string (String.make i ' ');
-      add_string s; false
+      add_sub_string s o l; false
     | Break Break.Space -> add_char ' '; false
     | Break Break.Newline -> add_char '\n'; true
     | GroupOne (i', _as) | GroupAll (i', _as) ->
@@ -136,8 +136,12 @@ let to_something (add_char : char -> unit) (add_string : string -> unit) (a : t)
 
 (** Write in a buffer the contents of an atom. *)
 let to_buffer (b : Buffer.t) (a : t) : unit =
-  to_something (Buffer.add_char b) (Buffer.add_string b) a
+  to_something (Buffer.add_char b) (Buffer.add_substring b) a
 
 (** Write in a channel the contents of an atom. *)
 let to_out_channel (c : out_channel) (a : t) : unit =
-  to_something (output_char c) (output_string c) a
+  let output_sub_string (s : string) (o : int) (l : int) : unit =
+    for i = o to o + l - 1 do
+      output_char c s.[i]
+    done in
+  to_something (output_char c) output_sub_string a

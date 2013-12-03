@@ -1,5 +1,5 @@
 default:
-	ocamlbuild smartPrint.native
+	ocamlbuild smartPrint.native -libs str
 
 clean:
 	ocamlbuild -clean

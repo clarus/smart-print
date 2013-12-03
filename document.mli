@@ -10,6 +10,11 @@ val empty : t
 (** A non-breaking string. The string should be newlines free. *)
 val string : string -> t
 
+(** A non-breaking string pointing to the sub-string of an existing string.
+    Does not duplicate the sub-string. The sub-string is indexed by its
+    index and its length. *)
+val sub_string : string -> int -> int -> t
+
 (** A shortcut for [string]. *)
 val (!^) : string -> t
 
@@ -74,6 +79,10 @@ val concat : t list -> t
 (** Concatenate the list of documents with no space but adding a separator in between. In O(n).
     [separate sep [d1; ...; dn] = d1 ^-^ sep ^-^ d2 ^-^ sep ... sep ^-^ dn] *)
 val separate : t -> t list -> t
+
+(** {1 Text} *)
+(**  *)
+val words : string -> t
 
 (** {1 OCaml values} *)
 (** Pretty-printing of OCaml values. *)

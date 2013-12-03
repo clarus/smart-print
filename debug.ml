@@ -5,7 +5,7 @@ open Atom
 (** Pretty-print an atom. *)
 let rec pp_atom (a : Atom.t) : Document.t =
   match a with
-  | String s -> OCaml.string s
+  | String (s, o, l) -> OCaml.string (String.sub s o l)
   | Break Break.Space -> !^ "Space"
   | Break Break.Newline -> !^ "Newline"
   | GroupOne (i, _as) -> !^ "GroupOne" ^^ parens (OCaml.int i ^-^ !^ "," ^^ pp_atoms _as)
@@ -17,3 +17,6 @@ and pp_atoms (_as : Atom.t list) : Document.t =
 
 let pp_document (d : Document.t) : Document.t =
   OCaml.list pp_atom (Document.unsafe_to_atoms d)
+
+let pp_document_after_rendering (width : int) (d : Document.t) : Document.t =
+  pp_atom @@ Atom.render width @@ Document.unsafe_to_atoms d

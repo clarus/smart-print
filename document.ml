@@ -8,9 +8,15 @@ type t =
 let empty : t = Empty
 
 let string (s : string) : t =
-  Leaf (Atom.String s)
+  if s = "" then
+    empty
+  else
+    Leaf (Atom.String (s, 0, String.length s))
 
 let (!^) = string
+
+let sub_string (s : string) (o : int) (l : int) : t =
+  Leaf (Atom.String (s, o, l))
 
 let space : t = Leaf (Atom.Break Break.Space)
 
@@ -78,6 +84,10 @@ let separate (separator : t) (ds : t list) : t =
   match ds with
   | [] -> empty
   | d :: ds -> d ^-^ aux ds
+
+(* * Text * *)
+let words (s : string) : t =
+  group @@ separate space @@ List.map string @@ Str.split (Str.regexp "[ \t\n]") s
 
 (* * OCaml values * *)
 module OCaml = struct
