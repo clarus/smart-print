@@ -89,6 +89,9 @@ let separate (separator : t) (ds : t list) : t =
 let words (s : string) : t =
   group @@ separate space @@ List.map string @@ Str.split (Str.regexp "[ \t\n]") s
 
+let lines (s : string) : t =
+  separate newline @@ List.map string @@ Str.split (Str.regexp "\n") s
+
 (* * OCaml values * *)
 module OCaml = struct
   let bool (b : bool) : t =

@@ -39,6 +39,13 @@ val (^^) : t -> t -> t
 (** Convert a document, which is a tree of atoms, to a list of atoms. In O(n). *)
 val unsafe_to_atoms : t -> Atom.t list
 
+(** {1 Text} *)
+(** Split a non-unicode string into words and breaking spaces. *)
+val words : string -> t
+
+(** Split a non-unicode string into lines at each newline. *)
+val lines : string -> t
+
 (** {1 Indentation and grouping} *)
 (** Indent a document, breaking spaces only when necessary. In O(n) with n the number of grouped documents. *)
 val nest : int -> t -> t
@@ -79,10 +86,6 @@ val concat : t list -> t
 (** Concatenate the list of documents with no space but adding a separator in between. In O(n).
     [separate sep [d1; ...; dn] = d1 ^-^ sep ^-^ d2 ^-^ sep ... sep ^-^ dn] *)
 val separate : t -> t list -> t
-
-(** {1 Text} *)
-(**  *)
-val words : string -> t
 
 (** {1 OCaml values} *)
 (** Pretty-printing of OCaml values. *)
