@@ -1,29 +1,6 @@
-(** A small program to test the library on different inputs. Run with [make test]. *)
+(** A small program to test the library on different samples.
+    Run with [make test]. Compare its output to the reference in [test.out]. *)
 open SmartPrint
-
-(** A pretty-printer for the pretty-printer itself. *)
-module Debug = struct
-  open Atom
-
-  (** Pretty-print an atom. *)
-  let rec pp_atom (a : Atom.t) : Document.t =
-    match a with
-    | String (s, o, l) -> OCaml.string (String.sub s o l)
-    | Break Break.Space -> !^ "Space"
-    | Break Break.Newline -> !^ "Newline"
-    | GroupOne (i, _as) -> !^ "GroupOne" ^^ parens (OCaml.int i ^-^ !^ "," ^^ pp_atoms _as)
-    | GroupAll (i, _as) -> !^ "GroupAll" ^^ parens (OCaml.int i ^-^ !^ "," ^^ pp_atoms _as)
-
-  (** Pretty-print a list of atoms. *)
-  and pp_atoms (_as : Atom.t list) : Document.t =
-    group_all (separate (!^ "," ^^ space) (List.map (fun a -> nest 2 (pp_atom a)) _as))
-
-  let pp_document (d : Document.t) : Document.t =
-    OCaml.list pp_atom (Document.unsafe_to_atoms d)
-
-  let pp_document_after_rendering (width : int) (d : Document.t) : Document.t =
-    pp_atom @@ Atom.render width @@ Document.unsafe_to_atoms d
-end
 
 (** A pretty-printer for a small functional language. *)
 module Example = struct
@@ -36,7 +13,7 @@ module Example = struct
     | Tuple of t list
 
   (** Pretty-print an expression, enclosing it in parenthesis if [paren] flag is set. *)
-  let rec pp (paren : bool) (e : t) : Document.t =
+  let rec pp (paren : bool) (e : t) : SmartPrint.t =
     let if_parens d =
       if paren then parens d else d in
     match e with
@@ -62,7 +39,7 @@ module Example = struct
 end
 
 (** Display the contents of a document and its AST. *)
-let print_document (d : Document.t) : unit =
+let print_document (d : SmartPrint.t) : unit =
   let width = 25 in
   to_stdout 160 @@ Debug.pp_document_after_rendering width d;
   print_newline ();

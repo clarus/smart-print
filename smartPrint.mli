@@ -1,6 +1,6 @@
-(** The document type and the user operators. *)
+(** SmartPrint library. *)
 
-(** The document abstract type. *)
+(** The document's abstract type. *)
 type t
 
 (** {1 Basics} *)
@@ -35,9 +35,6 @@ val concat_with_space : t -> t -> t
 
 (** A shortcut for [concat_with_space]. In O(1). Like [d1 ^-^ space ^-^ d2]. *)
 val (^^) : t -> t -> t
-
-(** Convert a document, which is a tree of atoms, to a list of atoms. In O(n). *)
-val unsafe_to_atoms : t -> Atom.t list
 
 (** {1 Text} *)
 (** Split a non-unicode string into words and breaking spaces. *)
@@ -107,6 +104,17 @@ module OCaml : sig
 
   (** Pretty-print a [list]. *)
   val list : ('a -> t) -> 'a list -> t
+end
+
+(** {1 Debugging} *)
+(** A pretty-printer for the pretty-printer itself. *)
+module Debug : sig
+  (** Pretty-print a document's structure. *)
+  val pp_document : t -> t
+
+  (** Pretty-print a document's structure after rendering (transformation of
+      some spaces to newlines). *)
+  val pp_document_after_rendering : int -> t -> t
 end
 
 (** {1 Rendering} *)
