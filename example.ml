@@ -1,5 +1,5 @@
 (** A pretty-printer for a small functional language. *)
-open Document
+open SmartPrint
 
 (** The syntax tree: variables, applications, functions, let-definitions, tuples. *)
 type t =
