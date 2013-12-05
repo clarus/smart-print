@@ -257,7 +257,8 @@ let rec pp (e : t) : SmartPrint.t =
   | Let (x, e1, e2) ->
     group (!^ "let" ^^ !^ x ^^ !^ "=" ^^ nest 2 (pp e1) ^^ !^ "in" ^^ newline ^^ pp e2)
   | Tuple es ->
-    parens (nest_all 2 (space ^^ separate (!^ "," ^^ space) (List.map pp es) ^^ space));;
+    parens (nest_all 2 (space ^^ separate (!^ "," ^^ space)
+      (List.map pp es) ^^ space));;
 ```
 
 We correclty get:
@@ -301,3 +302,18 @@ If you come from [PPrint](http://gallium.inria.fr/~fpottier/pprint/), here are s
 
 Documentation
 --------------
+You can also generate the documentation running `make doc`.
+
+* `type t` The document's abstract type.
+
+Basics:
+* `empty : t` The empty document.
+* `string : string -> t` A non-breaking string. The string should be newlines free.
+* `sub_string : string -> int -> int -> t` A non-breaking string pointing to the sub-string of an existing string. Does not duplicate the sub-string. The sub-string is indexed by its offset and its length.
+* `(!^) : string -> t` A shortcut for `string`.
+* `space : t` A breaking space.
+* `newline : t` A newline.
+* `append : t -> t -> t` Concatenation of two documents.
+* `(^-^) : t -> t -> t` A shortcut for `append`.
+* `concat_with_space : t -> t -> t` Concatenation of two documents with a breaking space in between. Like `d1 ^-^ space ^-^ d2`.
+* `(^^) : t -> t -> t` A shortcut for `concat_with_space`. Like `d1 ^-^ space ^-^ d2`.
