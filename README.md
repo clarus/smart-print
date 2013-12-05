@@ -135,6 +135,8 @@ Now the `Fun` and `Let` cases are easy for you:
       | Var x -> !^ x
       | App (e1, e2) -> group (parens (pp e1 ^^ nest 2 (pp e2)))
       | Fun (x, e) -> group (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ nest 2 (pp e)))
+      | Let (x, e1, e2) ->
+        group (!^ "let" ^^ !^ x ^^ !^ "=" ^^ nest 2 (pp e1) ^^ !^ "in" ^^ newline ^^ pp e2)
       | _ -> failwith "TODO";;
 
     to_stdout 25 (pp (Fun ("f", Fun ("x", App (Var "f", Var "x")))));;
@@ -151,6 +153,78 @@ writes:
       (fun x ->
         (fdsgo (x xdsdg))) in
     y
+
+To display the `Tuple` with need repetition. It is possible to cheat using `OCaml.list`:
+
+    let rec pp (e : t) : SmartPrint.t =
+      match e with
+      | Var x -> !^ x
+      | App (e1, e2) -> group (parens (pp e1 ^^ nest 2 (pp e2)))
+      | Fun (x, e) -> group (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ nest 2 (pp e)))
+      | Let (x, e1, e2) ->
+          group (!^ "let" ^^ !^ x ^^ !^ "=" ^^ nest 2 (pp e1) ^^ !^ "in" ^^ newline ^^ pp e2)
+      | Tuple es -> OCaml.list pp es;;
+    
+    to_stdout 25 (pp (Tuple []));;
+    to_stdout 25 (pp (Tuple [Var "x"; Var "y"]));;
+    to_stdout 25 (pp (Tuple (List.map (fun x -> Var x) ["kjh"; "lj"; "iop"; "rt"; "vbn"; "hjk"; "gkgytuuhi"])));;
+
+shows:
+
+    [ ]
+    [ x; y ]
+    [
+      kjh;
+      lj;
+      iop;
+      rt;
+      vbn;
+      hjk;
+      gkgytuuhi
+    ]
+
+Or we can use the `separate` combinator, which separates each element in a list of documents by a separator:
+
+    let rec pp (e : t) : SmartPrint.t =
+      match e with
+      | Var x -> !^ x
+      | App (e1, e2) -> group (parens (pp e1 ^^ nest 2 (pp e2)))
+      | Fun (x, e) -> group (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ nest 2 (pp e)))
+      | Let (x, e1, e2) ->
+          group (!^ "let" ^^ !^ x ^^ !^ "=" ^^ nest 2 (pp e1) ^^ !^ "in" ^^ newline ^^ pp e2)
+      | Tuple es -> parens (nest 2 (space ^^ separate (!^ "," ^^ space) (List.map pp es) ^^ space));;
+
+We now get:
+
+    ( )
+    ( x, y )
+    ( kjh, lj, iop, rt, vbn,
+      hjk, gkgytuuhi )
+
+We may prefer to get the last tuple on a column rather than on two lines. Change the splitting policy to "all" to break all spaces using `nest_all`:
+
+    let rec pp (e : t) : SmartPrint.t =
+      match e with
+      | Var x -> !^ x
+      | App (e1, e2) -> group (parens (pp e1 ^^ nest 2 (pp e2)))
+      | Fun (x, e) -> group (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ nest 2 (pp e)))
+      | Let (x, e1, e2) ->
+          group (!^ "let" ^^ !^ x ^^ !^ "=" ^^ nest 2 (pp e1) ^^ !^ "in" ^^ newline ^^ pp e2)
+      | Tuple es -> parens (nest_all 2 (space ^^ separate (!^ "," ^^ space) (List.map pp es) ^^ space));;
+
+We correclty get:
+
+    ( )
+    ( x, y )
+    (
+      kjh,
+      lj,
+      iop,
+      rt,
+      vbn,
+      hjk,
+      gkgytuuhi
+    )
 
 Concepts
 --------
