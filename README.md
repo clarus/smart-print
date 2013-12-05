@@ -23,8 +23,8 @@ Do not forget to open the SmartPrint module in your code:
 
     open SmartPrint
 
-Learn by examples
------------------
+Hello world
+-----------
 Open an OCaml toplevel:
 
     ocaml
@@ -75,6 +75,8 @@ gives:
     A long string with many
     spaces.
 
+Complete example
+----------------
 We now build a pretty-printer for a small functional language. Let its syntax be:
 
     type t =
@@ -154,7 +156,7 @@ writes:
         (fdsgo (x xdsdg))) in
     y
 
-To display the `Tuple` with need repetition. It is possible to cheat using `OCaml.list`:
+To display the `Tuple` we need repetition. It is possible to cheat using `OCaml.list`:
 
     let rec pp (e : t) : SmartPrint.t =
       match e with
