@@ -21,8 +21,15 @@ module Atom = struct
       (* A list of atoms at a given identation level. No or all the breaks are
           splited. *)
 
+  (* If we overflow a line. *)
   exception Overflow
 
+  (* Print "at best" an atom [a] for a line width [width]. [i] is the indentation
+     level, [p] the current column position (in number of spaces), [last_break] the
+     last break printed if any (so we can collapse spaces). It returns the same
+     atom where spaces have been evaluated to newlines, the new current column
+     position and the last break printed if any.
+     Must succeed (no uncaught [Overflow] exception). *)
   let rec eval (width : int) (i : int) (a : t) (p : int) (last_break : Break.t option)
     : t * int * Break.t option =
     match a with
@@ -42,6 +49,8 @@ module Atom = struct
         | Overflow -> eval_list_all width i _as p last_break in
       (GroupAll (i', _as), p, last_break)
 
+  (* Try to print an atom without evaluating the spaces. May raise [Overflow] if we
+     overflow the line [width]. *)
   and try_eval_flat (width : int) (i : int) (a : t) (p : int) (last_break : Break.t option)
     : t * int * Break.t option =
     let try_return (a, p, last_break) =
@@ -65,6 +74,7 @@ module Atom = struct
       let (_as, p, last_break) = try_eval_list_flat width (i + i') _as p last_break in
       (GroupAll (i', _as), p, last_break)
 
+  (* Like [try_eval_flat] but for a list of atoms. *)
   and try_eval_list_flat (width : int) (i : int) (_as : t list) (p : int) (last_break : Break.t option)
     : t list * int * Break.t option =
     match _as with
@@ -74,12 +84,15 @@ module Atom = struct
       let (_as, p, last_break) = try_eval_list_flat width i _as p last_break in
       (a :: _as, p, last_break)
 
+  (* Eval "at best" a list of atoms using the "split only when necessary" policy. The [can_fail]
+     flag controls if we can raise an [Overflow] or not. *)
   and try_eval_list_one (width : int) (i : int) (_as : t list) (p : int) (last_break : Break.t option)
     (can_fail : bool) : t list * int * Break.t option =
     match _as with
     | [] -> (_as, p, last_break)
     | Break Break.Space :: _as ->
       if last_break = None then
+        (* If it is not possible in flat mode switch back to "at best". *)
         (try let (_as, p, last_break) = try_eval_list_one width i _as (p + 1) (Some Break.Space) true in
           (Break Break.Space :: _as, p, last_break) with
         | Overflow -> try_eval_list_one width i (Break Break.Newline :: _as) p last_break false)
@@ -87,12 +100,14 @@ module Atom = struct
         try_eval_list_one width i _as p last_break can_fail
     | a :: _as ->
       let (a, p, last_break) =
+        (* If [Overflow] is possible we try in flat mode, else "at best". *)
         if can_fail
         then try_eval_flat width i a p last_break
         else eval width i a p last_break in
       let (_as, p, last_break) = try_eval_list_one width i _as p last_break can_fail in
       (a :: _as, p, last_break)
 
+  (* Eval "at best" a list of atoms splitting all the spaces. *)
   and eval_list_all (width : int) (i : int) (_as : t list) (p : int) (last_break : Break.t option)
     : t list * int * Break.t option =
     match _as with
