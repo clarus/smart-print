@@ -5,7 +5,7 @@ smart-print
 Inspired by [PPrint](http://gallium.inria.fr/~fpottier/pprint/) of [François Pottier](http://pauillac.inria.fr/~fpottier/) and [Nicolas Pouillard](http://nicolaspouillard.fr/). What it gives you:
 * a generic pretty-printing library in OCaml
 * a simple set of document combinators
-* no multiple space and no trailing space
+* multiple spaces collapsing and no trailing space
 * three printing modes: no splitting, splitting only when necessary, splitting at all spaces
 
 Install
@@ -308,18 +308,18 @@ You can also generate the documentation running `make doc`.
 
 Basics:
 * `empty : t` The empty document.
-* `string : string -> t` A non-breaking string. The string should be newlines free.
-* `sub_string : string -> int -> int -> t` A non-breaking string pointing to the sub-string of an existing string. Does not duplicate the sub-string. The sub-string is indexed by its offset and its length.
+* `string : string -> t` A non-breakable string. The string should be newlines free.
+* `sub_string : string -> int -> int -> t` A non-breakable string pointing to the sub-string of an existing string. Does not duplicate the sub-string. The sub-string is indexed by its offset and its length.
 * `(!^) : string -> t` A shortcut for `string`.
-* `space : t` A breaking space.
+* `space : t` A breakable space.
 * `newline : t` A newline.
 * `append : t -> t -> t` Concatenation of two documents.
 * `(^-^) : t -> t -> t` A shortcut for `append`.
-* `concat_with_space : t -> t -> t` Concatenation of two documents with a breaking space in between. Like `d1 ^-^ space ^-^ d2`.
+* `concat_with_space : t -> t -> t` Concatenation of two documents with a breakable space in between. Like `d1 ^-^ space ^-^ d2`.
 * `(^^) : t -> t -> t` A shortcut for `concat_with_space`. Like `d1 ^-^ space ^-^ d2`.
 
 Text:
-* `words : string -> t` Split a non-unicode string into words and breaking spaces.
+* `words : string -> t` Split a non-unicode string into words and breakable spaces.
 * `lines : string -> t` Split a non-unicode string into lines at each newline.
 
 Indentation and grouping:
