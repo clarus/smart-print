@@ -7,18 +7,18 @@ type t
 (** The empty document. *)
 val empty : t
 
-(** A non-breaking string. The string should be newlines free. *)
+(** A non-breakable string. The string should be newlines free. *)
 val string : string -> t
 
-(** A non-breaking string pointing to the sub-string of an existing string.
+(** A non-breakable string pointing to the sub-string of an existing string.
     Does not duplicate the sub-string. The sub-string is indexed by its
-    index and its length. *)
+    offset and its length. *)
 val sub_string : string -> int -> int -> t
 
 (** A shortcut for [string]. *)
 val (!^) : string -> t
 
-(** A breaking space. *)
+(** A breakable space. *)
 val space : t
 
 (** A newline. *)
@@ -30,14 +30,14 @@ val append : t -> t -> t
 (** A shortcut for [append]. *)
 val (^-^) : t -> t -> t
 
-(** Concatenation of two documents with a breaking space in between. Like [d1 ^-^ space ^-^ d2]. *)
+(** Concatenation of two documents with a breakable space in between. Like [d1 ^-^ space ^-^ d2]. *)
 val concat_with_space : t -> t -> t
 
 (** A shortcut for [concat_with_space]. Like [d1 ^-^ space ^-^ d2]. *)
 val (^^) : t -> t -> t
 
 (** {1 Text} *)
-(** Split a non-unicode string into words and breaking spaces. *)
+(** Split a non-unicode string into words and breakable spaces. *)
 val words : string -> t
 
 (** Split a non-unicode string into lines at each newline. *)
