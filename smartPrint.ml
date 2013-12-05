@@ -21,138 +21,127 @@ module Atom = struct
       (* A list of atoms at a given identation level. No or all the breaks are
           splited. *)
 
-  let rec squeeze_breaks (_as : t list) : Break.t list * t list * Break.t list =
-    let lift bs =
-      List.map (fun b -> Break b) bs in
-    match _as with
-    | [] -> ([], [], [])
-    | a :: _as ->
-      let (previous_breaks, _as, next_breaks) = squeeze_breaks _as in
-      let return_group group _as' =
-        let (previous_breaks', _as', next_breaks') = squeeze_breaks _as' in
-        if _as' = [] then
-          (previous_breaks' @ next_breaks' @ previous_breaks, _as, next_breaks)
-        else
-          (previous_breaks', group _as' :: lift next_breaks' @ lift previous_breaks @ _as, next_breaks) in
-      (match a with
-      | String _ as a -> ([], a :: lift previous_breaks @ _as, next_breaks)
-      | Break b -> (b :: previous_breaks, _as, next_breaks)
-      | GroupOne (i, _as') -> return_group (fun _as' -> GroupOne (i, _as')) _as'
-      | GroupAll (i, _as') -> return_group (fun _as' -> GroupAll (i, _as')) _as')
-
-  let rec merge_breaks (_as : t list) : t list =
-    match _as with
-    | [] -> _as
-    | (Break Break.Newline as a1) :: (Break Break.Newline as a2) :: _as ->
-      a1 :: merge_breaks (a2 :: _as)
-    | Break Break.Space :: Break b2 :: _as -> merge_breaks (Break b2 :: _as)
-    | Break b1 :: Break Break.Space :: _as -> merge_breaks (Break b1 :: _as)
-    | GroupOne (i, _as') :: _as -> GroupOne (i, merge_breaks _as') :: merge_breaks _as
-    | GroupAll (i, _as') :: _as -> GroupAll (i, merge_breaks _as') :: merge_breaks _as
-    | a :: _as -> a :: merge_breaks _as
-
   exception Overflow
 
-  let rec eval (width : int) (i : int) (a : t) (p : int) : t * int =
+  let rec eval (width : int) (i : int) (a : t) (p : int) (last_break : Break.t option)
+    : t * int * Break.t option =
     match a with
-    | String (_, _, l) -> (a, if p = 0 then p + i + l else p + l)
-    | Break Break.Space -> (a, p + 1)
-    | Break Break.Newline -> (a, 0)
+    | String (_, _, l) ->
+      (a, (if last_break = Some Break.Newline then p + i + l else p + l), None)
+    | Break Break.Space ->
+      if last_break = None then
+        (a, p + 1, Some Break.Space)
+      else
+        (a, p, last_break)
+    | Break Break.Newline -> (a, 0, Some Break.Newline)
     | GroupOne (i', _as) ->
-      let (_as, p) = try_eval_list_one width (i + i') _as p false in
-      (GroupOne (i', _as), p)
+      let (_as, p, last_break) = try_eval_list_one width (i + i') _as p last_break false in
+      (GroupOne (i', _as), p, last_break)
     | GroupAll (i', _as) ->
-      let (_as, p) = try try_eval_list_flat width (i + i') _as p with
-        | Overflow -> eval_list_all width i _as p in
-      (GroupAll (i', _as), p)
+      let (_as, p, last_break) = try try_eval_list_flat width (i + i') _as p last_break with
+        | Overflow -> eval_list_all width i _as p last_break in
+      (GroupAll (i', _as), p, last_break)
 
-  and try_eval_flat (width : int) (i : int) (a : t) (p : int) : t * int =
-    let try_return (a, p) =
+  and try_eval_flat (width : int) (i : int) (a : t) (p : int) (last_break : Break.t option)
+    : t * int * Break.t option =
+    let try_return (a, p, last_break) =
       if p > width then
         raise Overflow
       else
-        (a, p) in
+        (a, p, last_break) in
     match a with
-    | String (_, _, l) -> try_return (a, if p = 0 then p + i + l else p + l)
-    | Break Break.Space -> try_return (a, p + 1)
-    | Break Break.Newline -> (a, 0)
+    | String (_, _, l) ->
+      try_return (a, (if last_break = Some Break.Newline then p + i + l else p + l), None)
+    | Break Break.Space ->
+      if last_break = None then
+        try_return (a, p + 1, Some Break.Space)
+      else
+        try_return (a, p, last_break)
+    | Break Break.Newline -> (a, 0, Some Break.Newline)
     | GroupOne (i', _as) ->
-      let (_as, p) = try_eval_list_flat width (i + i') _as p in
-      (GroupOne (i', _as), p)
+      let (_as, p, last_break) = try_eval_list_flat width (i + i') _as p last_break in
+      (GroupOne (i', _as), p, last_break)
     | GroupAll (i', _as) ->
-      let (_as, p) = try_eval_list_flat width (i + i') _as p in
-      (GroupAll (i', _as), p)
+      let (_as, p, last_break) = try_eval_list_flat width (i + i') _as p last_break in
+      (GroupAll (i', _as), p, last_break)
 
-  and try_eval_list_flat (width : int) (i : int) (_as : t list) (p : int) : t list * int =
+  and try_eval_list_flat (width : int) (i : int) (_as : t list) (p : int) (last_break : Break.t option)
+    : t list * int * Break.t option =
     match _as with
-    | [] -> (_as, p)
+    | [] -> (_as, p, last_break)
     | a :: _as ->
-      let (a, p) = try_eval_flat width i a p in
-      let (_as, p) = try_eval_list_flat width i _as p in
-      (a :: _as, p)
+      let (a, p, last_break) = try_eval_flat width i a p last_break in
+      let (_as, p, last_break) = try_eval_list_flat width i _as p last_break in
+      (a :: _as, p, last_break)
 
-  and try_eval_list_one (width : int) (i : int) (_as : t list) (p : int) (can_fail : bool) : t list * int =
+  and try_eval_list_one (width : int) (i : int) (_as : t list) (p : int) (last_break : Break.t option)
+    (can_fail : bool) : t list * int * Break.t option =
     match _as with
-    | [] -> (_as, p)
+    | [] -> (_as, p, last_break)
     | Break Break.Space :: _as ->
-      (try let (_as, p) = try_eval_list_one width i _as (p + 1) true in
-        (Break Break.Space :: _as, p) with
-      | Overflow -> try_eval_list_one width i (Break Break.Newline :: _as) p false)
+      if last_break = None then
+        (try let (_as, p, last_break) = try_eval_list_one width i _as (p + 1) (Some Break.Space) true in
+          (Break Break.Space :: _as, p, last_break) with
+        | Overflow -> try_eval_list_one width i (Break Break.Newline :: _as) p last_break false)
+      else
+        try_eval_list_one width i _as p last_break can_fail
     | a :: _as ->
-      let (a, p) =
+      let (a, p, last_break) =
         if can_fail
-        then try_eval_flat width i a p
-        else eval width i a p in
-      let (_as, p) = try_eval_list_one width i _as p can_fail in
-      (a :: _as, p)
+        then try_eval_flat width i a p last_break
+        else eval width i a p last_break in
+      let (_as, p, last_break) = try_eval_list_one width i _as p last_break can_fail in
+      (a :: _as, p, last_break)
 
-  and eval_list_all (width : int) (i : int) (_as : t list) (p : int) : t list * int =
+  and eval_list_all (width : int) (i : int) (_as : t list) (p : int) (last_break : Break.t option)
+    : t list * int * Break.t option =
     match _as with
-    | [] -> (_as, p)
+    | [] -> (_as, p, last_break)
     | Break Break.Space :: _as ->
-      eval_list_all width i (Break Break.Newline :: _as) p
+      if last_break = None then
+        eval_list_all width i (Break Break.Newline :: _as) p last_break
+      else
+        eval_list_all width i _as p last_break
     | a :: _as ->
-      let (a, p) = eval width i a p in
-      let (_as, p) = eval_list_all width i _as p in
-      (a :: _as, p)
+      let (a, p, last_break) = eval width i a p last_break in
+      let (_as, p, last_break) = eval_list_all width i _as p last_break in
+      (a :: _as, p, last_break)
 
-  (* Squeeze, merge and evaluate the breaks with a maximal [width] per line. *)
+  (* Evaluate the breaks with a maximal [width] per line. *)
   let render (width : int) (_as : t list) : t =
-    let (previous_breaks, _as, next_breaks) = squeeze_breaks _as in
-    let lift = List.map (fun b -> Break b) in
-    let _as = lift previous_breaks @ _as @ lift next_breaks in
-    let _as = merge_breaks _as in
-    fst @@ eval width 0 (GroupOne (0, _as)) 0
+    let (a, _, _) = eval width 0 (GroupOne (0, _as)) 0 (Some Break.Newline) in
+    a
 
   (* Write to something, given the [add_char] and [add_string] functions. *)
-  let to_something (add_char : char -> unit) (add_sub_string : string -> int -> int -> unit) (a : t) : unit =
-    let add_string (s : string) : unit =
-      add_sub_string s 0 (String.length s) in
-    let rec aux (a : t) (i : int) (is_newline : bool) : bool =
+  let to_something (add_char : char -> unit) (add_string : string -> unit)
+    (add_sub_string : string -> int -> int -> unit) (a : t) : unit =
+    let rec aux (a : t) (i : int) (last_break : Break.t option) : Break.t option =
       match a with
       | String (s, o, l) ->
-        if is_newline then
+        if last_break = Some Break.Newline then
           add_string (String.make i ' ');
-        add_sub_string s o l; false
-      | Break Break.Space -> add_char ' '; false
-      | Break Break.Newline -> add_char '\n'; true
+        add_sub_string s o l; None
+      | Break Break.Space ->
+        if last_break <> Some Break.Space then
+          add_char ' ';
+        Some Break.Space
+      | Break Break.Newline -> add_char '\n'; Some Break.Newline
       | GroupOne (i', _as) | GroupAll (i', _as) ->
-        let b = ref is_newline in
-        _as |> List.iter (fun a -> b := aux a (i + i') !b);
-        !b in
-    ignore (aux a 0 true)
+        let last_break = ref last_break in
+        _as |> List.iter (fun a ->
+          last_break := aux a (i + i') !last_break);
+        !last_break in
+    ignore (aux a 0 (Some Break.Newline))
 
   (* Write in a buffer the contents of an atom. *)
   let to_buffer (b : Buffer.t) (a : t) : unit =
-    to_something (Buffer.add_char b) (Buffer.add_substring b) a
+    to_something (Buffer.add_char b) (Buffer.add_string b) (Buffer.add_substring b) a
 
   (* Write in a channel the contents of an atom. *)
   let to_out_channel (c : out_channel) (a : t) : unit =
     let output_sub_string (s : string) (o : int) (l : int) : unit =
-      for i = o to o + l - 1 do
-        output_char c s.[i]
-      done in
-    to_something (output_char c) output_sub_string a
+      output_string c (String.sub s o l) in
+    to_something (output_char c) (output_string c) output_sub_string a
 end
 
 (* A document is a binary tree of atoms so that concatenation happens in O(1). *)

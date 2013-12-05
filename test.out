@@ -1,6 +1,6 @@
-GroupOne (0, "hello", Space, "world", Newline, GroupOne (2, "gre", Space, GroupAll (2, "arg", Space, "arg")))
+GroupOne (0, "hello", Space, "world", Space, Newline, GroupOne (2, "gre", Space, GroupAll (2, "arg", Space, "arg")))
 *************************
-hello world
+hello world 
   gre arg arg
 *************************
 GroupOne (0, GroupOne (0, "f", Space, GroupOne (2, "x")))
@@ -42,11 +42,11 @@ GroupOne (0,
   fdsgvbcvvfo
     (xffd xdsgsdg))
 *************************
-GroupOne (0, "[", "]")
+GroupOne (0, "[", GroupAll (2, ), "]")
 *************************
 []
 *************************
-GroupOne (0, "[", GroupAll (2, "x", ";", Space, "y"), "]")
+GroupOne (0, "[", GroupAll (2, "x", ";", Space, Space, "y"), "]")
 *************************
 [x; y]
 *************************
@@ -63,9 +63,9 @@ GroupOne (0,
   hjk;
   gkgytuuhi]
 *************************
-GroupOne (0, GroupOne (0, "let", Space, "x", Space, "=", Space, GroupOne (2, "x"), Space, "in", Newline, "y"))
+GroupOne (0, GroupOne (0, "let", Space, "x", Space, "=", Space, GroupOne (2, "x"), Space, "in", Space, Newline, "y"))
 *************************
-let x = x in
+let x = x in 
 y
 *************************
 GroupOne (0,
@@ -89,12 +89,13 @@ GroupOne (0,
         ")")),
     Space,
     "in",
+    Space,
     Newline,
     "y"))
 *************************
 let x =
   (fun x ->
-    fdsgo (x xdsgsdg)) in
+    fdsgo (x xdsgsdg)) in 
 y
 *************************
 GroupOne (0, "kjl")

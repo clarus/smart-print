@@ -24,16 +24,16 @@ val space : t
 (** A newline. *)
 val newline : t
 
-(** Concatenation of two documents. In O(1). *)
+(** Concatenation of two documents. *)
 val append : t -> t -> t
 
-(** A shortcut for [append]. In O(1). *)
+(** A shortcut for [append]. *)
 val (^-^) : t -> t -> t
 
-(** Concatenation of two documents with a breaking space in between. In O(1). Like [d1 ^-^ space ^-^ d2]. *)
+(** Concatenation of two documents with a breaking space in between. Like [d1 ^-^ space ^-^ d2]. *)
 val concat_with_space : t -> t -> t
 
-(** A shortcut for [concat_with_space]. In O(1). Like [d1 ^-^ space ^-^ d2]. *)
+(** A shortcut for [concat_with_space]. Like [d1 ^-^ space ^-^ d2]. *)
 val (^^) : t -> t -> t
 
 (** {1 Text} *)
@@ -44,43 +44,43 @@ val words : string -> t
 val lines : string -> t
 
 (** {1 Indentation and grouping} *)
-(** Indent a document, breaking spaces only when necessary. In O(n) with n the number of grouped documents. *)
+(** Indent a document, breaking spaces only when necessary. *)
 val nest : int -> t -> t
 
-(** Indent a document, breaking no space or all spaces if the line is full. In O(n) with n the number of grouped documents. *)
+(** Indent a document, breaking no space or all spaces if the line is full. *)
 val nest_all : int -> t -> t
 
-(** Like [nest 0]. In O(n) with n the number of grouped documents. *)
+(** Like [nest 0]. *)
 val group : t -> t
 
-(** Like [nest_all 0]. In O(n) with n the number of grouped documents. *)
+(** Like [nest_all 0]. *)
 val group_all : t -> t
 
 (** {1 Enclosing} *)
-(** Enclose the document in parenthesis ( ). In O(1). *)
+(** Enclose the document in parenthesis ( ). *)
 val parens : t -> t
 
-(** Enclose the document in braces \{ \}. In O(1). *)
+(** Enclose the document in braces \{ \}. *)
 val braces : t -> t
 
-(** Enclose the document in brakets \[ \]. In O(1). *)
+(** Enclose the document in brakets \[ \]. *)
 val brakets : t -> t
 
-(** Enclose the document in angle brakets < >. In O(1). *)
+(** Enclose the document in angle brakets < >. *)
 val angle_brakets : t -> t
 
-(** Enclose the document in single quotes ' '. In O(1). *)
+(** Enclose the document in single quotes ' '. *)
 val single_quotes : t -> t
 
-(** Enclose the document in double quotes " ". In O(1). *)
+(** Enclose the document in double quotes " ". *)
 val double_quotes : t -> t
 
 (** {1 Lists} *)
-(** Concatenate the list of documents with no space. In O(n).
+(** Concatenate the list of documents with no space.
     [concat [d1; ...; dn] = d1 ^-^ ... ^-^ dn] *)
 val concat : t list -> t
 
-(** Concatenate the list of documents with no space but adding a separator in between. In O(n).
+(** Concatenate the list of documents with no space but adding a separator in between.
     [separate sep [d1; ...; dn] = d1 ^-^ sep ^-^ d2 ^-^ sep ... sep ^-^ dn] *)
 val separate : t -> t list -> t
 
