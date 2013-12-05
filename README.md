@@ -317,3 +317,43 @@ Basics:
 * `(^-^) : t -> t -> t` A shortcut for `append`.
 * `concat_with_space : t -> t -> t` Concatenation of two documents with a breaking space in between. Like `d1 ^-^ space ^-^ d2`.
 * `(^^) : t -> t -> t` A shortcut for `concat_with_space`. Like `d1 ^-^ space ^-^ d2`.
+
+Text:
+* `words : string -> t` Split a non-unicode string into words and breaking spaces.
+* `lines : string -> t` Split a non-unicode string into lines at each newline.
+
+Indentation and grouping:
+* `nest : int -> t -> t` Indent a document, breaking spaces only when necessary.
+* `nest_all : int -> t -> t` Indent a document, breaking no space or all spaces if the line is full.
+* `group : t -> t` Like `nest 0`.
+* `group_all : t -> t` Like `nest_all 0`.
+
+Enclosing:
+* `parens : t -> t` Enclose the document in parenthesis ( ).
+* `braces : t -> t` Enclose the document in braces { }.
+* `brakets : t -> t` Enclose the document in brakets [ ].
+* `angle_brakets : t -> t` Enclose the document in angle brakets < >.
+* `single_quotes : t -> t` Enclose the document in single quotes ' '.
+* `double_quotes : t -> t` Enclose the document in double quotes " ".
+
+Lists:
+* `concat : t list -> t` Concatenate the list of documents with no space. `concat [d1; ...; dn]` is like `d1 ^-^ ... ^-^ dn`.
+* `separate : t -> t list -> t` Concatenate the list of documents with no space but adding a separator in between. `separate sep [d1; ...; dn]` is like `d1 ^-^ sep ^-^ d2 ^-^ sep ... sep ^-^ dn`.
+
+OCaml values:
+* `OCaml.bool : bool -> t` Pretty-print a `bool`.
+* `OCaml.int : int -> t` Pretty-print an `int`.
+* `OCaml.float : float -> t` Pretty-print a `float`.
+* `OCaml.string : string -> t` Pretty-print a `string`.
+* `OCaml.option : ('a -> t) -> 'a option -> t` Pretty-print an `option`.
+* `OCaml.list : ('a -> t) -> 'a list -> t` Pretty-print a `list`.
+
+A pretty-printer for the pretty-printer itself:
+* `Debug.pp_document : t -> t` Pretty-print a document's structure.
+* `Debug.pp_document_after_rendering : int -> t -> t` Pretty-print a document's structure after rendering (transformation of some spaces to newlines).
+
+Rendering:
+* `to_buffer : int -> Buffer.t -> t -> unit` Render a document in a buffer with a maximal width per line.
+* `to_string : int -> t -> string` Render a document in a string with a maximal width per line.
+* `to_out_channel : int -> out_channel -> t -> unit` Render a document in an output channel with a maximal width per line.
+* `to_stdout : int -> t -> unit` Render a document on `stdout` with a maximal width per line.
