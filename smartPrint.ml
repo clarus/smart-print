@@ -112,20 +112,72 @@ module Atom = struct
     let (a, _, _) = eval width 0 (GroupOne (0, _as)) 0 (Some Break.Newline) in
     a
 
+  (* A buffer eating trailing spaces. *)
+  module NonTrailingBuffer = struct
+    type t = {
+      add_char : char -> unit;
+      add_string : string -> unit;
+      add_sub_string : string -> int -> int -> unit;
+      mutable nb_spaces : int }
+
+    (* A new buffer. *)
+    let make (add_char : char -> unit) (add_string : string -> unit)
+      (add_sub_string : string -> int -> int -> unit) : t =
+      {
+        add_char = add_char;
+        add_string = add_string;
+        add_sub_string = add_sub_string;
+        nb_spaces = 0 (* A number of spaces we may print if they are not trailing. *) }
+
+    (* Forget previous spaces which appear to be trailing. *)
+    let forget_spaces (b : t) : unit =
+      b.nb_spaces <- 0
+
+    (* Spaces are not trailing: print all of them. *)
+    let flush_spaces (b : t) : unit =
+      b.add_string (String.make b.nb_spaces ' ');
+      forget_spaces b
+
+    (* Indent by [i] spaces. By convention, indentation spaces are always
+        printed, even one an empty line, to mark the indentation level. *)
+    let indent (b : t) (i : int) : unit =
+      forget_spaces b;
+      b.add_string (String.make i ' ')
+
+    (* Print a sub-string. *)
+    let sub_string (b : t) (s : string) (o : int) (l : int) : unit =
+      flush_spaces b;
+      b.add_sub_string s o l
+
+    (* Add one space in the buffer. *)
+    let space (b : t) : unit =
+      b.nb_spaces <- b.nb_spaces + 1
+
+    (* Print a newline, with no trailing space before it. *)
+    let newline (b : t) : unit =
+      forget_spaces b;
+      b.add_char '\n'
+  end
+
   (* Write to something, given the [add_char] and [add_string] functions. *)
   let to_something (add_char : char -> unit) (add_string : string -> unit)
     (add_sub_string : string -> int -> int -> unit) (a : t) : unit =
-    let rec aux (a : t) (i : int) (last_break : Break.t option) : Break.t option =
+    let open NonTrailingBuffer in
+    let b = make add_char add_string add_sub_string in
+    let rec aux a i (last_break : Break.t option) : Break.t option =
       match a with
       | String (s, o, l) ->
         if last_break = Some Break.Newline then
-          add_string (String.make i ' ');
-        add_sub_string s o l; None
+          indent b i;
+        sub_string b s o l; None
       | Break Break.Space ->
         if last_break <> Some Break.Space then
-          add_char ' ';
+          space b;
         Some Break.Space
-      | Break Break.Newline -> add_char '\n'; Some Break.Newline
+      | Break Break.Newline ->
+        if last_break = Some Break.Newline then
+          indent b i;
+        newline b; Some Break.Newline
       | GroupOne (i', _as) | GroupAll (i', _as) ->
         let last_break = ref last_break in
         _as |> List.iter (fun a ->
@@ -253,7 +305,7 @@ module OCaml = struct
     | Some x -> !^ "Some" ^^ nest 2 (d x)
 
   let list (d : 'a -> t) (l : 'a list) : t =
-    brakets (nest_all 2 @@ separate (!^ ";" ^^ space) (List.map d l))
+    brakets @@ nest_all 2 (space ^^ separate (!^ ";" ^^ space) (List.map d l) ^^ space)
 end
 
 module Debug = struct

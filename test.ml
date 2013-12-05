@@ -22,8 +22,7 @@ module Example = struct
     | Fun (x, e) -> group (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ nest 2 @@ pp false e))
     | Let (x, e1, e2) ->
       group (!^ "let" ^^ !^ x ^^ !^ "=" ^^ nest 2 (pp false e1) ^^ !^ "in" ^^ newline ^^ pp false e2)
-    | Tuple es -> (*group_all @@ parens @@ separate (!^ "," ^^ space) (es |> List.map (fun e -> nest 2 @@ pp false e))*)
-      OCaml.list (pp false) es
+    | Tuple es -> OCaml.list (pp false) es
 
   (** A sample of expressions. *)
   let es = [
@@ -54,6 +53,7 @@ let main () =
     print_document @@ Example.pp false e);
   print_document (sub_string "hfgs_kjl_df" 5 3);
   print_document (words "Lorem     ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.");
-  print_document (lines "adipisicing elit,\nsed do eiusmod tempor\nincididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud ")
+  print_document (lines "adipisicing elit,\nsed do eiusmod tempor\nincididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud ");
+  print_document (nest 2 @@ lines "adipisicing elit,\n\nsed do eiusmod tempo")
 
 ;;main ()
