@@ -178,7 +178,8 @@ let rec pp (e : t) : SmartPrint.t =
 
 to_stdout 25 (pp (Fun ("f", Fun ("x", App (Var "f", Var "x")))));;
 to_stdout 25 (pp (Let ("x", Var "x", Var "y")));;
-to_stdout 25 (pp (Let ("x", Fun ("x", App (Var "fdsgo", App (Var "x", Var "xdsdg"))), Var "y")));;
+to_stdout 25 (pp (Let ("x", Fun ("x", App (Var "fdsgo",
+  App (Var "x", Var "xdsdg"))), Var "y")));;
 ```
 
 writes:
@@ -201,12 +202,13 @@ let rec pp (e : t) : SmartPrint.t =
   | App (e1, e2) -> group (parens (pp e1 ^^ nest 2 (pp e2)))
   | Fun (x, e) -> group (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ nest 2 (pp e)))
   | Let (x, e1, e2) ->
-      group (!^ "let" ^^ !^ x ^^ !^ "=" ^^ nest 2 (pp e1) ^^ !^ "in" ^^ newline ^^ pp e2)
+    group (!^ "let" ^^ !^ x ^^ !^ "=" ^^ nest 2 (pp e1) ^^ !^ "in" ^^ newline ^^ pp e2)
   | Tuple es -> OCaml.list pp es;;
 
 to_stdout 25 (pp (Tuple []));;
 to_stdout 25 (pp (Tuple [Var "x"; Var "y"]));;
-to_stdout 25 (pp (Tuple (List.map (fun x -> Var x) ["kjh"; "lj"; "iop"; "rt"; "vbn"; "hjk"; "gkgytuuhi"])));;
+to_stdout 25 (pp (Tuple (List.map (fun x -> Var x)
+  ["kjh"; "lj"; "iop"; "rt"; "vbn"; "hjk"; "gkgytuuhi"])));;
 ```
 
 shows:
@@ -232,8 +234,9 @@ let rec pp (e : t) : SmartPrint.t =
   | App (e1, e2) -> group (parens (pp e1 ^^ nest 2 (pp e2)))
   | Fun (x, e) -> group (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ nest 2 (pp e)))
   | Let (x, e1, e2) ->
-      group (!^ "let" ^^ !^ x ^^ !^ "=" ^^ nest 2 (pp e1) ^^ !^ "in" ^^ newline ^^ pp e2)
-  | Tuple es -> parens (nest 2 (space ^^ separate (!^ "," ^^ space) (List.map pp es) ^^ space));;
+    group (!^ "let" ^^ !^ x ^^ !^ "=" ^^ nest 2 (pp e1) ^^ !^ "in" ^^ newline ^^ pp e2)
+  | Tuple es ->
+    parens (nest 2 (space ^^ separate (!^ "," ^^ space) (List.map pp es) ^^ space));;
 ```
 
 We now get:
@@ -252,8 +255,9 @@ let rec pp (e : t) : SmartPrint.t =
   | App (e1, e2) -> group (parens (pp e1 ^^ nest 2 (pp e2)))
   | Fun (x, e) -> group (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ nest 2 (pp e)))
   | Let (x, e1, e2) ->
-      group (!^ "let" ^^ !^ x ^^ !^ "=" ^^ nest 2 (pp e1) ^^ !^ "in" ^^ newline ^^ pp e2)
-  | Tuple es -> parens (nest_all 2 (space ^^ separate (!^ "," ^^ space) (List.map pp es) ^^ space));;
+    group (!^ "let" ^^ !^ x ^^ !^ "=" ^^ nest 2 (pp e1) ^^ !^ "in" ^^ newline ^^ pp e2)
+  | Tuple es ->
+    parens (nest_all 2 (space ^^ separate (!^ "," ^^ space) (List.map pp es) ^^ space));;
 ```
 
 We correclty get:
