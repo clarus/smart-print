@@ -66,7 +66,15 @@ With an endline:
 
 *SmartPrint needs to be aware of where spaces and newlines are, so you always need to tell him explicitly.*
 
-If the string is longer:
+Useless spaces are automatically removed:
+
+    to_stdout 25 (!^ "hello" ^^ space ^^ space ^^ !^ "word" ^^ space ^^ newline);;
+
+is also:
+
+    hello word
+
+(no trailing space). If the string is longer:
 
     to_stdout 25 (words "A long string with many spaces." ^^ newline);;
 
@@ -230,6 +238,17 @@ We correclty get:
 
 Concepts
 --------
+Internally, documents are represented by a tree:
+
+    type t =
+      | String of string * int * int
+      | Break of Break.t
+      | GroupOne of int * t list
+      | GroupAll of int * t list
+
+Breaks can be spaces or newlines. During evaluation, spaces can be lifted to newlines to make each line shorter than the maximal width. They are two kinds of groups for two grouping policies: split only when necessary (default behavior), or try to print on one line else split everything. Each group can have an indentation level.
+
+During printing, each space appearing after another space is ignored (no multiple space), as well as trailing spaces.
 
 Differences with PPrint
 -----------------------
