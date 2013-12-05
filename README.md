@@ -252,6 +252,12 @@ During printing, each space appearing after another space is ignored (no multipl
 
 Differences with PPrint
 -----------------------
+If you come from [PPrint](http://gallium.inria.fr/~fpottier/pprint/), here are some differences you should notice:
+* `^^` stands for `^/^`
+* `^-^` stands for `^^`
+* spaces are collapsing
+* a `nest` is also a `group` (actually a `group` is just `nest 0`)
+* there are three printing modes: flat, on need (by default, split only when necessary) and all (like the normal mode of PPrint)
 
 Documentation
 --------------
