@@ -228,7 +228,10 @@ let string (s : string) : t =
 let (!^) = string
 
 let sub_string (s : string) (o : int) (l : int) : t =
-  Leaf (Atom.String (s, o, l))
+  if l = 0 then
+    empty
+  else
+    Leaf (Atom.String (s, o, l))
 
 let space : t = Leaf (Atom.Break Break.Space)
 
@@ -295,11 +298,22 @@ let separate (separator : t) (ds : t list) : t =
   | [] -> empty
   | d :: ds -> d ^-^ aux ds
 
+let rec split (s : string) (f : char -> bool) (o : int) (l : int)
+  : (int * int) list =
+  if o + l = String.length s then
+    [(o, l)]
+  else if f s.[o + l] then
+    (o, l) :: split s f (o + l + 1) 0
+  else
+    split s f o (l + 1)
+
 let words (s : string) : t =
-  group @@ separate space @@ List.map string @@ Str.split (Str.regexp "[ \t\n]") s
+  group @@ separate space @@ List.map (fun (o, l) -> sub_string s o l)
+    (split s (fun c -> c = ' ' || c = '\n' || c = '\t') 0 0)
 
 let lines (s : string) : t =
-  separate newline @@ List.map string @@ Str.split (Str.regexp "\n") s
+  separate newline @@ List.map (fun (o, l) -> sub_string s o l)
+    (split s (fun c -> c = '\n') 0 0)
 
 module OCaml = struct
   let bool (b : bool) : t =

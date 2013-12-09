@@ -1,4 +1,3 @@
-requires = "str"
 description = "SmartPrint pretty-printing library"
 archive(byte) = "smartPrintLib.cma"
 archive(native) = "smartPrintLib.cmxa"

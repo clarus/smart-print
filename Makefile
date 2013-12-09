@@ -14,5 +14,5 @@ doc:
 	ocamlbuild smartPrint.docdir/index.html
 
 test: default
-	ocamlbuild test.native -libs str
+	ocamlbuild test.native
 	./test.native |diff -s - test.out
