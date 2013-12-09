@@ -96,8 +96,8 @@ module Atom = struct
         (try let (_as, p, last_break) = try_eval_list_one width i _as (p + 1) (Some Break.Space) true in
           (Break Break.Space :: _as, p, last_break) with
         | Overflow -> try_eval_list_one width i (Break Break.Newline :: _as) p last_break false)
-      else
-        try_eval_list_one width i _as p last_break can_fail
+      else (
+        try_eval_list_one width i _as p last_break can_fail)
     | a :: _as ->
       let (a, p, last_break) =
         (* If [Overflow] is possible we try in flat mode, else "at best". *)
@@ -186,7 +186,7 @@ module Atom = struct
           indent b i;
         sub_string b s o l; None
       | Break Break.Space ->
-        if last_break <> Some Break.Space then
+        if last_break = None then
           space b;
         Some Break.Space
       | Break Break.Newline ->
