@@ -45,10 +45,10 @@ val lines : string -> t
 
 (** {1 Indentation and grouping} *)
 (** Indent a document, breaking spaces only when necessary. *)
-val nest : int -> t -> t
+val nest : t -> t
 
 (** Indent a document, breaking no space or all spaces if the line is full. *)
-val nest_all : int -> t -> t
+val nest_all : t -> t
 
 (** Like [nest 0]. *)
 val group : t -> t
@@ -114,18 +114,18 @@ module Debug : sig
 
   (** Pretty-print a document's structure after rendering (transformation of
       some spaces to newlines). *)
-  val pp_document_after_rendering : int -> t -> t
+  val pp_document_after_rendering : int -> int -> t -> t
 end
 
 (** {1 Rendering} *)
 (** Render a document in a buffer with a maximal [width] per line. *)
-val to_buffer : int -> Buffer.t -> t -> unit
+val to_buffer : int -> int -> Buffer.t -> t -> unit
 
 (** Render a document in a string with a maximal [width] per line. *)
-val to_string : int -> t -> string
+val to_string : int -> int -> t -> string
 
 (** Render a document in an output channel with a maximal [width] per line. *)
-val to_out_channel : int -> out_channel -> t -> unit
+val to_out_channel : int -> int -> out_channel -> t -> unit
 
 (** Render a document on [stdout] with a maximal [width] per line. *)
-val to_stdout : int -> t -> unit
+val to_stdout : int -> int -> t -> unit
