@@ -292,9 +292,15 @@ adipisicing elit,
 sed do eiusmod tempor
 incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud 
 *************************
-GroupOne (false, GroupOne (true, "adipisicing elit,", Newline, Newline, "sed do eiusmod tempo"))
+GroupOne (false, GroupOne (true, "adipisicing elit,", Newline, Newline, "sed do eiusmod tempo incididunt ut labore et dolore"))
 *************************
 adipisicing elit,
 
-sed do eiusmod tempo
+sed do eiusmod tempo incididunt ut labore et dolore
+*************************
+GroupOne (false, Indent (1, GroupOne (true, "adipisicing elit,", Newline, Newline, "sed do eiusmod tempo incididunt ut labore et dolore")))
+*************************
+  adipisicing elit,
+  
+  sed do eiusmod tempo incididunt ut labore et dolore
 *************************

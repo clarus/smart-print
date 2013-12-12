@@ -44,6 +44,9 @@ val words : string -> t
 val lines : string -> t
 
 (** {1 Indentation and grouping} *)
+(** Add one level of indentation. *)
+val indent : t -> t
+
 (** Indent a document, breaking spaces only when necessary. *)
 val nest : t -> t
 

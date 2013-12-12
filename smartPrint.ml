@@ -48,7 +48,9 @@ module Atom = struct
         (Indent (1, GroupAll (can_nest, _as)), p, last_break)
       else
         (GroupAll (can_nest, _as), p, last_break)
-    | Indent (n, a) -> eval width tab (i + n * tab) a p last_break
+    | Indent (n, a) ->
+      let (a, p, last_break) = eval width tab (i + n * tab) a p last_break in
+      (Indent (n, a), p, last_break)
 
   (* Try to print an atom without evaluating the spaces. May raise [Overflow] if we
      overflow the line [width]. *)
@@ -277,6 +279,12 @@ let to_atoms (d : t) : Atom.t list =
     | Leaf a -> a :: l
     | Node (d1, d2) -> aux d1 (aux d2 l) in
   aux d []
+
+let rec indent (d : t) : t =
+  match d with
+  | Empty -> Empty
+  | Leaf a -> Leaf (Indent (1, a))
+  | Node (d1, d2) -> Node (indent d1, indent d2)
 
 let nest (d : t) : t =
   Leaf (Atom.GroupOne (true, to_atoms d))
