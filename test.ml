@@ -40,7 +40,7 @@ end
 (** Display the contents of a document and its AST. *)
 let print_document (d : SmartPrint.t) : unit =
   let width = 25 in
-  let tab = 2 in
+  let tab = 0 in
   to_stdout 160 tab @@ Debug.pp_document_after_rendering width tab d;
   print_newline ();
   print_endline @@ String.make width '*';
