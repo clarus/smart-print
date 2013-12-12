@@ -14,12 +14,9 @@ module Atom = struct
       (* A non-breaking string. It should be newlines free. Represented as a
           sub-string of an other string, with an offset and a length. *)
     | Break of Break.t (* A separator. *)
-    | GroupOne of t list
-      (* A list of atoms at a given identation level. Only the necessary number
-          of breaks are splited. *)
-    | GroupAll of t list
-      (* A list of atoms at a given identation level. No or all the breaks are
-          splited. *)
+    | GroupOne of bool * t list (* A list of atoms. Only the necessary number of breaks are splited. *)
+    | GroupAll of bool * t list (* A list of atoms. No or all the breaks are splited. *)
+    | Indent of int * t
 
   (* If we overflow a line. *)
   exception Overflow
@@ -41,13 +38,17 @@ module Atom = struct
       else
         (a, p, last_break)
     | Break Break.Newline -> (a, 0, Some Break.Newline)
-    | GroupOne _as ->
-      let (_as, p, last_break) = try_eval_list_one width tab (i + tab) _as p last_break false in
-      (GroupOne _as, p, last_break)
-    | GroupAll _as ->
+    | GroupOne (can_nest, _as) ->
+      let (_as, p, last_break) = try_eval_list_one width tab i _as p last_break false can_nest false in
+      (GroupOne (can_nest, _as), p, last_break)
+    | GroupAll (can_nest, _as) ->
       let (_as, p, last_break) = try try_eval_list_flat width tab (i + tab) _as p last_break with
         | Overflow -> eval_list_all width i tab _as p last_break in
-      (GroupAll _as, p, last_break)
+      if can_nest then
+        (Indent (1, GroupAll (can_nest, _as)), p, last_break)
+      else
+        (GroupAll (can_nest, _as), p, last_break)
+    | Indent (n, a) -> eval width tab (i + n * tab) a p last_break
 
   (* Try to print an atom without evaluating the spaces. May raise [Overflow] if we
      overflow the line [width]. *)
@@ -67,12 +68,13 @@ module Atom = struct
       else
         try_return (a, p, last_break)
     | Break Break.Newline -> (a, 0, Some Break.Newline)
-    | GroupOne _as ->
+    | GroupOne (can_nest, _as) ->
       let (_as, p, last_break) = try_eval_list_flat width tab (i + tab) _as p last_break in
-      (GroupOne _as, p, last_break)
-    | GroupAll _as ->
+      (GroupOne (can_nest, _as), p, last_break)
+    | GroupAll (can_nest, _as) ->
       let (_as, p, last_break) = try_eval_list_flat width tab (i + tab) _as p last_break in
-      (GroupAll _as, p, last_break)
+      (GroupAll (can_nest, _as), p, last_break)
+    | Indent (_, a) -> try_eval_flat width tab i a p last_break
 
   (* Like [try_eval_flat] but for a list of atoms. *)
   and try_eval_list_flat (width : int) (tab : int) (i : int) (_as : t list) (p : int) (last_break : Break.t option)
@@ -86,29 +88,48 @@ module Atom = struct
 
   (* Eval "at best" a list of atoms using the "split only when necessary" policy. The [can_fail]
      flag controls if we can raise an [Overflow] or not. *)
-  and try_eval_list_one (width : int) (tab : int) (i : int) (_as : t list) (p : int) (last_break : Break.t option)
-    (can_fail : bool) : t list * int * Break.t option =
+  and try_eval_list_one (width : int) (tab : int) (i : int) (_as : t list) (p : int)
+    (last_break : Break.t option) (can_fail : bool) (can_nest : bool) (in_nest : bool)
+    : t list * int * Break.t option =
     match _as with
     | [] -> (_as, p, last_break)
     | Break Break.Space :: _as ->
       if last_break = None then
-        (* If it is not possible in flat mode switch back to "at best". *)
-        (try let (_as, p, last_break) = try_eval_list_one width tab i _as (p + 1) (Some Break.Space) true in
+        (* If it is not possible in flat mode, switch back to "at best". *)
+        (try let (_as, p, last_break) = try_eval_list_one width tab i _as (p + 1) (Some Break.Space) true can_nest in_nest in
           (Break Break.Space :: _as, p, last_break) with
-        | Overflow -> try_eval_list_one width tab i (Break Break.Newline :: _as) p last_break false)
+        | Overflow ->
+          let do_indent = can_nest && not in_nest in
+          let (_as, p, last_break) = try_eval_list_one width tab (if do_indent then i + tab else i)
+            _as 0 (Some Break.Newline) false can_nest can_nest in
+          if do_indent then
+            ([Break Break.Newline; Indent (1, GroupOne (false, _as))], p, last_break)
+          else
+            (Break Break.Newline :: _as, p, last_break))
       else
-        try_eval_list_one width tab i _as p last_break can_fail
+        try_eval_list_one width tab i _as p last_break can_fail can_nest in_nest
+    | Break Break.Newline :: _as ->
+      let (_as, p, last_break) =
+        if in_nest then
+          try_eval_list_one width tab (i - tab) _as 0 last_break can_fail can_nest false
+        else
+          try_eval_list_one width tab i _as 0 last_break can_fail can_nest in_nest in
+      if in_nest then
+        ([Break Break.Newline; Indent (- 1, GroupOne (false, _as))], p, last_break)
+      else
+        (Break Break.Newline :: _as, p, last_break)
     | a :: _as ->
       let (a, p, last_break) =
         (* If [Overflow] is possible we try in flat mode, else "at best". *)
         if can_fail
         then try_eval_flat width tab i a p last_break
         else eval width tab i a p last_break in
-      let (_as, p, last_break) = try_eval_list_one width tab i _as p last_break can_fail in
+      let (_as, p, last_break) = try_eval_list_one width tab i _as p last_break can_fail can_nest in_nest in
       (a :: _as, p, last_break)
 
   (* Eval "at best" a list of atoms splitting all the spaces. *)
-  and eval_list_all (width : int) (tab : int) (i : int) (_as : t list) (p : int) (last_break : Break.t option)
+  and eval_list_all (width : int) (tab : int) (i : int) (_as : t list) (p : int)
+    (last_break : Break.t option)
     : t list * int * Break.t option =
     match _as with
     | [] -> (_as, p, last_break)
@@ -124,7 +145,7 @@ module Atom = struct
 
   (* Evaluate the breaks with a maximal [width] per line and a tabulation width [tab]. *)
   let render (width : int) (tab : int) (_as : t list) : t =
-    let (a, _, _) = eval width tab 0 (GroupOne _as) 0 (Some Break.Newline) in
+    let (a, _, _) = eval width tab 0 (GroupOne (false, _as)) 0 (Some Break.Newline) in
     a
 
   (* A buffer eating trailing spaces. *)
@@ -193,11 +214,12 @@ module Atom = struct
         if last_break = Some Break.Newline then
           indent b i;
         newline b; Some Break.Newline
-      | GroupOne _as | GroupAll _as ->
+      | GroupOne (_, _as) | GroupAll (_, _as) ->
         let last_break = ref last_break in
         _as |> List.iter (fun a ->
-          last_break := aux a (i + tab) !last_break);
-        !last_break in
+          last_break := aux a i !last_break);
+        !last_break
+      | Indent (n, a) -> aux a (i + n * tab) last_break in
     ignore (aux a 0 (Some Break.Newline))
 
   (* Write in a buffer the contents of an atom. *)
@@ -257,16 +279,16 @@ let to_atoms (d : t) : Atom.t list =
   aux d []
 
 let nest (d : t) : t =
-  Leaf (Atom.GroupOne (to_atoms d))
+  Leaf (Atom.GroupOne (true, to_atoms d))
 
 let nest_all (d : t) : t =
-  Leaf (Atom.GroupAll (to_atoms d))
+  Leaf (Atom.GroupAll (true, to_atoms d))
 
 let group (d : t) : t =
-  nest d
+  Leaf (Atom.GroupOne (false, to_atoms d))
 
 let group_all (d : t) : t =
-  nest_all d
+  Leaf (Atom.GroupAll (false, to_atoms d))
 
 let parens (d : t) : t =
   !^ "(" ^-^ d ^-^ !^ ")"
@@ -345,12 +367,13 @@ module Debug = struct
     | Atom.String (s, o, l) -> OCaml.string (String.sub s o l)
     | Atom.Break Break.Space -> !^ "Space"
     | Atom.Break Break.Newline -> !^ "Newline"
-    | Atom.GroupOne _as -> !^ "GroupOne" ^^ parens (pp_atoms _as)
-    | Atom.GroupAll _as -> !^ "GroupAll" ^^ parens (pp_atoms _as)
+    | Atom.GroupOne (can_nest, _as) -> nest (!^ "GroupOne" ^^ parens (OCaml.bool can_nest ^-^ !^ "," ^^ pp_atoms _as))
+    | Atom.GroupAll (can_nest, _as) -> nest (!^ "GroupAll" ^^ parens (OCaml.bool can_nest ^-^ !^ "," ^^ pp_atoms _as))
+    | Atom.Indent (n, a) -> nest (!^ "Indent" ^^ parens (OCaml.int n ^-^ !^ "," ^^ pp_atom a))
 
   (* Pretty-print a list of atoms. *)
   and pp_atoms (_as : Atom.t list) : t =
-    group_all (separate (!^ "," ^^ space) (List.map (fun a -> nest (pp_atom a)) _as))
+    group_all (separate (!^ "," ^^ space) (List.map pp_atom _as))
 
   let pp_document (d : t) : t =
     OCaml.list pp_atom (to_atoms d)

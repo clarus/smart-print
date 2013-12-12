@@ -18,10 +18,10 @@ module Example = struct
       if paren then parens d else d in
     match e with
     | Var x -> !^ x
-    | App (e1, e2) -> group (if_parens (pp true e1 ^^ nest @@ pp true e2))
-    | Fun (x, e) -> group (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ nest @@ pp false e))
+    | App (e1, e2) -> nest (if_parens (pp true e1 ^^ pp true e2))
+    | Fun (x, e) -> nest (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ pp false e))
     | Let (x, e1, e2) ->
-      group (!^ "let" ^^ !^ x ^^ !^ "=" ^^ nest (pp false e1) ^^ !^ "in" ^^ newline ^^ pp false e2)
+      nest (!^ "let" ^^ !^ x ^^ !^ "=" ^^ pp false e1 ^^ !^ "in" ^^ newline ^^ pp false e2)
     | Tuple es -> OCaml.list (pp false) es
 
   (** A sample of expressions. *)
