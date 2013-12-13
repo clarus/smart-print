@@ -7,6 +7,7 @@ Inspired by [PPrint](http://gallium.inria.fr/~fpottier/pprint/) of [François Po
 * a simple set of document combinators
 * multiple spaces collapsing and no trailing space
 * three printing modes: no splitting, splitting only when necessary, splitting at all spaces
+* a mode with automatic indentation on splitting
 
 Install
 -------
