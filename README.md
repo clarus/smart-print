@@ -42,17 +42,17 @@ open SmartPrint;;
 The classic *hello word*:
 
 ```ocaml
-to_stdout 25 (!^ "hello word");;
+to_stdout 25 2 (!^ "hello word");;
 ```
 
-The maximal number of spaces per line is 25 so the output is:
+The maximal number of spaces per line is 25 and the tabulation size 2, so the output is:
 
     hello word
 
 But if we try:
 
 ```ocaml
-to_stdout 6 (!^ "hello word");;
+to_stdout 6 2 (!^ "hello word");;
 ```
 
 we also get:
@@ -62,7 +62,7 @@ we also get:
 We need to specify where the breakable spaces are:
 
 ```ocaml
-to_stdout 6 (!^ "hello" ^^ !^ "word");;
+to_stdout 6 2 (!^ "hello" ^^ !^ "word");;
 ```
 
 gives:
@@ -73,7 +73,7 @@ gives:
 With an endline:
 
 ```ocaml
-to_stdout 6 (!^ "hello" ^^ !^ "word" ^^ newline);;
+to_stdout 6 2 (!^ "hello" ^^ !^ "word" ^^ newline);;
 ```
 
 *SmartPrint needs to be aware of where spaces and newlines are, so you always need to tell him explicitly.*
@@ -81,7 +81,7 @@ to_stdout 6 (!^ "hello" ^^ !^ "word" ^^ newline);;
 Useless spaces are automatically removed:
 
 ```ocaml
-to_stdout 25 (!^ "hello" ^^ space ^^ space ^^ !^ "word" ^^ space ^^ newline);;
+to_stdout 25 2 (!^ "hello" ^^ space ^^ space ^^ !^ "word" ^^ space ^^ newline);;
 ```
 
 is also:
@@ -91,7 +91,7 @@ is also:
 (no trailing space). If the string is longer:
 
 ```ocaml
-to_stdout 25 (words "A long string with many spaces." ^^ newline);;
+to_stdout 25 2 (words "A long string with many spaces." ^^ newline);;
 ```
 
 gives:
@@ -125,9 +125,9 @@ let rec pp (e : t) : SmartPrint.t =
 The `^-^` concatenates with no space, `^^` with one space. `a ^^ b` is like `a ^-^ space ^-^ b`.
 
 ```ocaml
-to_stdout 25 (pp (Var "x"));;
-to_stdout 25 (pp (App (Var "f", Var "x")));;
-to_stdout 25 (pp (App (Var "fdsgoklkmeee", App (Var "ffedz", Var "xetgred"))));;
+to_stdout 25 2 (pp (Var "x"));;
+to_stdout 25 2 (pp (App (Var "f", Var "x")));;
+to_stdout 25 2 (pp (App (Var "fdsgoklkmeee", App (Var "ffedz", Var "xetgred"))));;
 ```
 
 displays:
@@ -143,10 +143,10 @@ We would prefer to indent the last line:
 let rec pp (e : t) : SmartPrint.t =
   match e with
   | Var x -> !^ x
-  | App (e1, e2) -> !^ "(" ^-^ pp e1 ^^ nest 2 (pp e2) ^-^ !^ ")"
+  | App (e1, e2) -> nest (!^ "(" ^-^ pp e1 ^^ pp e2 ^-^ !^ ")")
   | _ -> failwith "TODO";;
 
-to_stdout 25 (pp (App (Var "fdsgoklkmeee", App (Var "ffedz", Var "xetgred"))));;
+to_stdout 25 2 (pp (App (Var "fdsgoklkmeee", App (Var "ffedz", Var "xetgred"))));;
 ```
 
 gives:
@@ -154,13 +154,13 @@ gives:
     (fdsgoklkmeee
       (ffedz xetgred))
 
-The `nest 2` idents by two spaces and groups its parameter. Groups are like parenthesis for pretty-printing: they control the priority of spaces to know where to cut first. When we indent we always group. To make it perfect, group everything and use the more idiomatic `parens`:
+The `nest` groups its parameter and indent each new line by two spaces. Groups are like parenthesis for pretty-printing: they control the priority of spaces to know where to cut first. To make it perfect, use the more idiomatic `parens`:
 
 ```ocaml
 let rec pp (e : t) : SmartPrint.t =
   match e with
   | Var x -> !^ x
-  | App (e1, e2) -> group (parens (pp e1 ^^ nest 2 (pp e2)))
+  | App (e1, e2) -> nest (parens (pp e1 ^^ pp e2))
   | _ -> failwith "TODO";;
 ```
 
@@ -170,15 +170,15 @@ Now the `Fun` and `Let` cases are easy for you:
 let rec pp (e : t) : SmartPrint.t =
   match e with
   | Var x -> !^ x
-  | App (e1, e2) -> group (parens (pp e1 ^^ nest 2 (pp e2)))
-  | Fun (x, e) -> group (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ nest 2 (pp e)))
+  | App (e1, e2) -> nest (parens (pp e1 ^^ pp e2))
+  | Fun (x, e) -> nest (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ pp e))
   | Let (x, e1, e2) ->
-    group (!^ "let" ^^ !^ x ^^ !^ "=" ^^ nest 2 (pp e1) ^^ !^ "in" ^^ newline ^^ pp e2)
+    nest (!^ "let" ^^ !^ x ^^ !^ "=" ^^ pp e1 ^^ !^ "in" ^^ newline ^^ pp e2)
   | _ -> failwith "TODO";;
 
-to_stdout 25 (pp (Fun ("f", Fun ("x", App (Var "f", Var "x")))));;
-to_stdout 25 (pp (Let ("x", Var "x", Var "y")));;
-to_stdout 25 (pp (Let ("x", Fun ("x", App (Var "fdsgo",
+to_stdout 25 2 (pp (Fun ("f", Fun ("x", App (Var "f", Var "x")))));;
+to_stdout 25 2 (pp (Let ("x", Var "x", Var "y")));;
+to_stdout 25 2 (pp (Let ("x", Fun ("x", App (Var "fdsgo",
   App (Var "x", Var "xdsdg"))), Var "y")));;
 ```
 
@@ -199,15 +199,15 @@ To display the `Tuple` we need repetition. It is possible to cheat using `OCaml.
 let rec pp (e : t) : SmartPrint.t =
   match e with
   | Var x -> !^ x
-  | App (e1, e2) -> group (parens (pp e1 ^^ nest 2 (pp e2)))
-  | Fun (x, e) -> group (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ nest 2 (pp e)))
+  | App (e1, e2) -> nest (parens (pp e1 ^^ pp e2))
+  | Fun (x, e) -> nest (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ pp e))
   | Let (x, e1, e2) ->
-    group (!^ "let" ^^ !^ x ^^ !^ "=" ^^ nest 2 (pp e1) ^^ !^ "in" ^^ newline ^^ pp e2)
+    nest (!^ "let" ^^ !^ x ^^ !^ "=" ^^ pp e1 ^^ !^ "in" ^^ newline ^^ pp e2)
   | Tuple es -> OCaml.list pp es;;
 
-to_stdout 25 (pp (Tuple []));;
-to_stdout 25 (pp (Tuple [Var "x"; Var "y"]));;
-to_stdout 25 (pp (Tuple (List.map (fun x -> Var x)
+to_stdout 25 2 (pp (Tuple []));;
+to_stdout 25 2 (pp (Tuple [Var "x"; Var "y"]));;
+to_stdout 25 2 (pp (Tuple (List.map (fun x -> Var x)
   ["kjh"; "lj"; "iop"; "rt"; "vbn"; "hjk"; "gkgytuuhi"])));;
 ```
 
@@ -231,12 +231,12 @@ Or we can use the `separate` combinator, which separates each element in a list 
 let rec pp (e : t) : SmartPrint.t =
   match e with
   | Var x -> !^ x
-  | App (e1, e2) -> group (parens (pp e1 ^^ nest 2 (pp e2)))
-  | Fun (x, e) -> group (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ nest 2 (pp e)))
+  | App (e1, e2) -> nest (parens (pp e1 ^^ pp e2))
+  | Fun (x, e) -> nest (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ pp e))
   | Let (x, e1, e2) ->
-    group (!^ "let" ^^ !^ x ^^ !^ "=" ^^ nest 2 (pp e1) ^^ !^ "in" ^^ newline ^^ pp e2)
+    nest (!^ "let" ^^ !^ x ^^ !^ "=" ^^ pp e1 ^^ !^ "in" ^^ newline ^^ pp e2)
   | Tuple es ->
-    parens (nest 2 (space ^^ separate (!^ "," ^^ space) (List.map pp es) ^^ space));;
+    nest (parens (space ^^ separate (!^ "," ^^ space) (List.map pp es) ^^ space));;
 ```
 
 We now get:
@@ -252,13 +252,12 @@ We may prefer to get the last tuple on a column rather than on two lines. Change
 let rec pp (e : t) : SmartPrint.t =
   match e with
   | Var x -> !^ x
-  | App (e1, e2) -> group (parens (pp e1 ^^ nest 2 (pp e2)))
-  | Fun (x, e) -> group (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ nest 2 (pp e)))
+  | App (e1, e2) -> nest (parens (pp e1 ^^ pp e2))
+  | Fun (x, e) -> nest (parens (!^ "fun" ^^ !^ x ^^ !^ "->" ^^ pp e))
   | Let (x, e1, e2) ->
-    group (!^ "let" ^^ !^ x ^^ !^ "=" ^^ nest 2 (pp e1) ^^ !^ "in" ^^ newline ^^ pp e2)
+    nest (!^ "let" ^^ !^ x ^^ !^ "=" ^^ pp e1 ^^ !^ "in" ^^ newline ^^ pp e2)
   | Tuple es ->
-    parens (nest_all 2 (space ^^ separate (!^ "," ^^ space)
-      (List.map pp es) ^^ space));;
+    nest_all (parens (space ^^ separate (!^ "," ^^ space) (List.map pp es) ^^ space));;
 ```
 
 We correclty get:
@@ -325,8 +324,8 @@ Text:
 
 Indentation and grouping:
 * `indent : t -> t` Add one level of indentation.
-* `nest : int -> t -> t` Group a document, breaking spaces only when necessary. Indent when spaces are broken.
-* `nest_all : int -> t -> t` Group a document, breaking all spaces if the line is full. Indent when spaces are broken.
+* `nest : t -> t` Group a document, breaking spaces only when necessary. Indent when spaces are broken.
+* `nest_all : t -> t` Group a document, breaking all spaces if the line is full. Indent when spaces are broken.
 * `group : t -> t` Group a document, breaking spaces only when necessary. Do not indent when spaces are broken.
 * `group_all : t -> t` Group a document, breaking all spaces if the line is full. Do not indent when spaces are broken.
 
@@ -356,7 +355,7 @@ A pretty-printer for the pretty-printer itself:
 
 Rendering:
 * `to_something : int -> int -> (char -> unit) -> (string -> unit) -> (string -> int -> int -> unit) -> t -> unit` : Render a document with a maximal width per line and a tabulation size. Uses the functions `add_char`, `add_string` and `add_sub_string` given in parameters.
-* `to_buffer : int -> Buffer.t -> t -> unit` Render a document in a buffer with a maximal width per line and a tabulation size.
-* `to_string : int -> t -> string` Render a document in a string with a maximal width per line and a tabulation size.
-* `to_out_channel : int -> out_channel -> t -> unit` Render a document in an output channel with a maximal width per line and a tabulation size.
-* `to_stdout : int -> t -> unit` Render a document on stdout with a maximal width per line and a tabulation size.
+* `to_buffer : int -> int -> Buffer.t -> t -> unit` Render a document in a buffer with a maximal width per line and a tabulation size.
+* `to_string : int -> int -> t -> string` Render a document in a string with a maximal width per line and a tabulation size.
+* `to_out_channel : int -> int -> out_channel -> t -> unit` Render a document in an output channel with a maximal width per line and a tabulation size.
+* `to_stdout : int -> int -> t -> unit` Render a document on stdout with a maximal width per line and a tabulation size.
