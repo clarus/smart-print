@@ -6,8 +6,8 @@ Inspired by [PPrint](http://gallium.inria.fr/~fpottier/pprint/) of [François Po
 * a generic pretty-printing library in OCaml
 * a simple set of document combinators
 * multiple spaces collapsing and no trailing space
-* three printing modes: no splitting, splitting only when necessary, splitting at all spaces
-* a mode with automatic indentation on splitting
+* two printing modes: splitting only when necessary, splitting at all spaces
+* automatic indentation on splitting (if necessary)
 
 Install
 -------
@@ -320,7 +320,7 @@ If you come from [PPrint](http://gallium.inria.fr/~fpottier/pprint/), here are s
 * `^-^` stands for `^^`
 * spaces are collapsing
 * a `nest` is also a `group`, but indenting when spaces are broken
-* there are three printing modes: flat, on need (by default, split only when necessary) and all (like the normal mode of PPrint)
+* there are internally three printing modes: flat, on need (by default, split only when necessary) and all (like the normal mode of PPrint)
 
 Documentation
 --------------
