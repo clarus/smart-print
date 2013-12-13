@@ -6,7 +6,8 @@ Inspired by [PPrint](http://gallium.inria.fr/~fpottier/pprint/) of [François Po
 * a generic pretty-printing library in OCaml
 * a simple set of document combinators
 * multiple spaces collapsing and no trailing space
-* three printing modes: no splitting, splitting only when necessary, splitting at all spaces
+* two printing modes: splitting only when necessary, splitting at all spaces
+* automatic indentation on splitting (if necessary)
 
 Install
 -------
@@ -249,6 +250,27 @@ We now get:
 We may prefer to get the last tuple on a column rather than on two lines. Change the splitting policy to "all" to break all spaces using `nest_all`:
 
 ```ocaml
+  | Tuple es ->
+    nest_all (parens (space ^^ separate (!^ "," ^^ space) (List.map pp es) ^^ space));;
+```
+
+We get:
+
+    ( )
+    ( x, y )
+    (
+      kjh,
+      lj,
+      iop,
+      rt,
+      vbn,
+      hjk,
+      gkgytuuhi
+      )
+
+In order not to indent the last parenthesis, we can put the parenthesis outside the `nest_all`:
+
+```ocaml
 let rec pp (e : t) : SmartPrint.t =
   match e with
   | Var x -> !^ x
@@ -257,10 +279,10 @@ let rec pp (e : t) : SmartPrint.t =
   | Let (x, e1, e2) ->
     nest (!^ "let" ^^ !^ x ^^ !^ "=" ^^ pp e1 ^^ !^ "in" ^^ newline ^^ pp e2)
   | Tuple es ->
-    nest_all (parens (space ^^ separate (!^ "," ^^ space) (List.map pp es) ^^ space));;
+    parens (nest_all (space ^^ separate (!^ "," ^^ space) (List.map pp es) ^^ space));;
 ```
 
-We correclty get:
+We correctly get:
 
     ( )
     ( x, y )
@@ -298,7 +320,7 @@ If you come from [PPrint](http://gallium.inria.fr/~fpottier/pprint/), here are s
 * `^-^` stands for `^^`
 * spaces are collapsing
 * a `nest` is also a `group`, but indenting when spaces are broken
-* there are three printing modes: flat, on need (by default, split only when necessary) and all (like the normal mode of PPrint)
+* there are internally three printing modes: flat, on need (by default, split only when necessary) and all (like the normal mode of PPrint)
 
 Documentation
 --------------
