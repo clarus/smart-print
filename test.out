@@ -300,9 +300,16 @@ GroupOne (false,
       "in",
       Space,
       Newline,
-      GroupOne (true, "let", Space, "x", Space, "=", Space, "x", Space, "in", Space, Newline, Space, "y"))))
+      GroupOne (true, "let", Space, "x", Space, "=", Space, "x", Space, "in", Space, Newline, "y"))))
 *************************
   let x = x in
+  let x = x in
+  y
+*************************
+GroupOne (false,
+  GroupOne (true, "f", Newline, Indent (1, GroupOne (false, GroupOne (true, "let", Space, "x", Space, "=", Space, "x", Space, "in", Space, Newline, "y")))))
+*************************
+f
   let x = x in
   y
 *************************

@@ -72,7 +72,7 @@ module Atom = struct
         try_return (p + 1, Some Break.Space)
       else
         try_return (p, last_break)
-    | Break Break.Newline -> (0, Some Break.Newline)
+    | Break Break.Newline -> raise Overflow
     | GroupOne (can_nest, _as) ->
       let (p, last_break) = try_eval_list_flat width tab (i + tab) _as p last_break in
       (p, last_break)
@@ -118,9 +118,9 @@ module Atom = struct
       let (_as, p, last_break) =
         (* If there is an explicit newline we always undo the nesting. *)
         if in_nest then
-          try_eval_list_one width tab (i - tab) _as 0 last_break can_fail can_nest false
+          try_eval_list_one width tab (i - tab) _as 0 (Some Break.Newline) false can_nest false
         else
-          try_eval_list_one width tab i _as 0 last_break can_fail can_nest in_nest in
+          try_eval_list_one width tab i _as 0 (Some Break.Newline) false can_nest false in
       if in_nest then
         ([Break Break.Newline; Indent (- 1, GroupOne (false, _as))], p, last_break)
       else
