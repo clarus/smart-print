@@ -47,16 +47,20 @@ val lines : string -> t
 (** Add one level of indentation. *)
 val indent : t -> t
 
-(** Indent a document, breaking spaces only when necessary. *)
+(** Group a document, breaking spaces only when necessary.
+    Indent when spaces are broken. *)
 val nest : t -> t
 
-(** Indent a document, breaking no space or all spaces if the line is full. *)
+(** Group a document, breaking all spaces if the line is full.
+    Indent when spaces are broken. *)
 val nest_all : t -> t
 
-(** Like [nest 0]. *)
+(** Group a document, breaking spaces only when necessary.
+    Do not indent when spaces are broken. *)
 val group : t -> t
 
-(** Like [nest_all 0]. *)
+(** Group a document, breaking all spaces if the line is full.
+    Do not indent when spaces are broken. *)
 val group_all : t -> t
 
 (** {1 Enclosing} *)
@@ -121,14 +125,21 @@ module Debug : sig
 end
 
 (** {1 Rendering} *)
-(** Render a document in a buffer with a maximal [width] per line. *)
+(** Render a document with a maximal [width] per line and a tabulation size.
+    Uses the functions [add_char], [add_string] and [add_sub_string] given. *)
+val to_something :
+  int -> int ->
+  (char -> unit) -> (string -> unit) -> (string -> int -> int -> unit) ->
+  t -> unit
+
+(** Render a document in a buffer with a maximal [width] per line and a tabulation size. *)
 val to_buffer : int -> int -> Buffer.t -> t -> unit
 
-(** Render a document in a string with a maximal [width] per line. *)
+(** Render a document in a string with a maximal [width] per line and a tabulation size. *)
 val to_string : int -> int -> t -> string
 
-(** Render a document in an output channel with a maximal [width] per line. *)
+(** Render a document in an output channel with a maximal [width] per line and a tabulation size. *)
 val to_out_channel : int -> int -> out_channel -> t -> unit
 
-(** Render a document on [stdout] with a maximal [width] per line. *)
+(** Render a document on [stdout] with a maximal [width] per line and a tabulation size. *)
 val to_stdout : int -> int -> t -> unit

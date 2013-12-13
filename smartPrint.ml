@@ -95,7 +95,8 @@ module Atom = struct
       (p, last_break)
 
   (* Eval "at best" a list of atoms using the "split only when necessary" policy. The [can_fail]
-     flag controls if we can raise an [Overflow] or not. *)
+     flag controls if we can raise an [Overflow], the [can_nest] if we can nest when we break,
+     [in_nest] if we have already nested. *)
   and try_eval_list_one (width : int) (tab : int) (i : int) (_as : t list) (p : int)
     (last_break : Break.t option) (can_fail : bool) (can_nest : bool) (in_nest : bool)
     : t list * int * Break.t option =
@@ -118,6 +119,7 @@ module Atom = struct
         try_eval_list_one width tab i _as p last_break can_fail can_nest in_nest
     | Break Break.Newline :: _as ->
       let (_as, p, last_break) =
+        (* If there is an explicit newline we always undo the nesting. *)
         if in_nest then
           try_eval_list_one width tab (i - tab) _as 0 last_break can_fail can_nest false
         else
@@ -231,16 +233,6 @@ module Atom = struct
         !last_break
       | Indent (n, a) -> aux a (i + n * tab) last_break in
     ignore (aux a 0 (Some Break.Newline))
-
-  (* Write in a buffer the contents of an atom. *)
-  let to_buffer (tab : int) (b : Buffer.t) (a : t) : unit =
-    to_something tab (Buffer.add_char b) (Buffer.add_string b) (Buffer.add_substring b) a
-
-  (* Write in a channel the contents of an atom. *)
-  let to_out_channel (tab : int) (c : out_channel) (a : t) : unit =
-    let output_sub_string (s : string) (o : int) (l : int) : unit =
-      output_string c (String.sub s o l) in
-    to_something tab (output_char c) (output_string c) output_sub_string a
 end
 
 (* A document is a binary tree of atoms so that concatenation happens in O(1). *)
@@ -291,7 +283,7 @@ let to_atoms (d : t) : Atom.t list =
 let rec indent (d : t) : t =
   match d with
   | Empty -> Empty
-  | Leaf a -> Leaf (Indent (1, a))
+  | Leaf a -> Leaf (Atom.Indent (1, a))
   | Node (d1, d2) -> Node (indent d1, indent d2)
 
 let nest (d : t) : t =
@@ -398,8 +390,16 @@ module Debug = struct
     pp_atom @@ Atom.render width tab @@ to_atoms d
 end
 
+let to_something (width : int) (tab : int)
+  (add_char : char -> unit) (add_string : string -> unit)
+  (add_sub_string : string -> int -> int -> unit)
+  (d : t) : unit =
+  Atom.to_something tab add_char add_string add_sub_string @@
+    Atom.render width tab @@ to_atoms d
+
 let to_buffer (width : int) (tab : int) (b : Buffer.t) (d : t) : unit =
-  Atom.to_buffer tab b @@ Atom.render width tab @@ to_atoms d
+  to_something width tab
+    (Buffer.add_char b) (Buffer.add_string b) (Buffer.add_substring b) d
 
 let to_string (width : int) (tab : int) (d : t) : string =
   let b = Buffer.create 10 in
@@ -407,7 +407,10 @@ let to_string (width : int) (tab : int) (d : t) : string =
   Buffer.contents b
 
 let to_out_channel (width : int) (tab : int) (c : out_channel) (d : t) : unit =
-  Atom.to_out_channel tab c @@ Atom.render width tab @@ to_atoms d
+  let output_sub_string (s : string) (o : int) (l : int) : unit =
+    output_string c (String.sub s o l) in
+  to_something width tab
+    (output_char c) (output_string c) output_sub_string d
 
 let to_stdout (width : int) (tab : int) (d : t) : unit =
   to_out_channel width tab stdout d
