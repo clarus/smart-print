@@ -286,3 +286,23 @@ GroupOne (false, Indent (1, GroupOne (true, "adipisicing elit,", Newline, Newlin
   
   sed do eiusmod tempo incididunt ut labore et dolore
 *************************
+GroupOne (false,
+  Indent (1,
+    GroupOne (true,
+      "let",
+      Space,
+      "x",
+      Space,
+      "=",
+      Space,
+      "x",
+      Space,
+      "in",
+      Space,
+      Newline,
+      GroupOne (true, "let", Space, "x", Space, "=", Space, "x", Space, "in", Space, Newline, Space, "y"))))
+*************************
+  let x = x in
+  let x = x in
+  y
+*************************

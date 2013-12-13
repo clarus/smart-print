@@ -218,13 +218,15 @@ module Atom = struct
     let rec aux a i (last_break : Break.t option) : Break.t option =
       match a with
       | String (s, o, l) ->
+        (*Printf.printf "<%d, %b>" i (last_break = Some Break.Newline);*)
         if last_break = Some Break.Newline then
           indent b i;
         sub_string b s o l; None
       | Break Break.Space ->
         if last_break = None then
-          space b;
-        Some Break.Space
+          (space b; Some Break.Space)
+        else
+          last_break
       | Break Break.Newline ->
         if last_break = Some Break.Newline then
           indent b i;
