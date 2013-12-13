@@ -14,9 +14,13 @@ module Atom = struct
       (* A non-breaking string. It should be newlines free. Represented as a
           sub-string of an other string, with an offset and a length. *)
     | Break of Break.t (* A separator. *)
-    | GroupOne of bool * t list (* A list of atoms. Only the necessary number of breaks are splited. *)
-    | GroupAll of bool * t list (* A list of atoms. No or all the breaks are splited. *)
-    | Indent of int * t
+    | GroupOne of bool * t list
+      (* A list of atoms. Only the necessary number of breaks are splited.
+         The boolean is true if nesting is activated. *)
+    | GroupAll of bool * t list
+      (* A list of atoms. No or all the breaks are splited.
+         The boolean is true if nesting is activated. *)
+    | Indent of int * t (* Indents by [n] tabulations the atom. Can be negative. *)
 
   (* If we overflow a line. *)
   exception Overflow
@@ -42,7 +46,9 @@ module Atom = struct
       let (_as, p, last_break) = try_eval_list_one width tab i _as p last_break false can_nest false in
       (GroupOne (can_nest, _as), p, last_break)
     | GroupAll (can_nest, _as) ->
-      let (_as, p, last_break) = try try_eval_list_flat width tab (i + tab) _as p last_break with
+      let (_as, p, last_break) =
+        try let (p, last_break) = try_eval_list_flat width tab (i + tab) _as p last_break in
+          (_as, p, last_break) with
         | Overflow -> eval_list_all width i tab _as p last_break in
       if can_nest then
         (Indent (1, GroupAll (can_nest, _as)), p, last_break)
@@ -55,38 +61,38 @@ module Atom = struct
   (* Try to print an atom without evaluating the spaces. May raise [Overflow] if we
      overflow the line [width]. *)
   and try_eval_flat (width : int) (tab : int) (i : int) (a : t) (p : int) (last_break : Break.t option)
-    : t * int * Break.t option =
-    let try_return (a, p, last_break) =
+    : int * Break.t option =
+    let try_return (p, last_break) =
       if p > width then
         raise Overflow
       else
-        (a, p, last_break) in
+        (p, last_break) in
     match a with
     | String (_, _, l) ->
-      try_return (a, (if last_break = Some Break.Newline then p + i + l else p + l), None)
+      try_return ((if last_break = Some Break.Newline then p + i + l else p + l), None)
     | Break Break.Space ->
       if last_break = None then
-        try_return (a, p + 1, Some Break.Space)
+        try_return (p + 1, Some Break.Space)
       else
-        try_return (a, p, last_break)
-    | Break Break.Newline -> (a, 0, Some Break.Newline)
+        try_return (p, last_break)
+    | Break Break.Newline -> (0, Some Break.Newline)
     | GroupOne (can_nest, _as) ->
-      let (_as, p, last_break) = try_eval_list_flat width tab (i + tab) _as p last_break in
-      (GroupOne (can_nest, _as), p, last_break)
+      let (p, last_break) = try_eval_list_flat width tab (i + tab) _as p last_break in
+      (p, last_break)
     | GroupAll (can_nest, _as) ->
-      let (_as, p, last_break) = try_eval_list_flat width tab (i + tab) _as p last_break in
-      (GroupAll (can_nest, _as), p, last_break)
+      let (p, last_break) = try_eval_list_flat width tab (i + tab) _as p last_break in
+      (p, last_break)
     | Indent (_, a) -> try_eval_flat width tab i a p last_break
 
   (* Like [try_eval_flat] but for a list of atoms. *)
   and try_eval_list_flat (width : int) (tab : int) (i : int) (_as : t list) (p : int) (last_break : Break.t option)
-    : t list * int * Break.t option =
+    : int * Break.t option =
     match _as with
-    | [] -> (_as, p, last_break)
+    | [] -> (p, last_break)
     | a :: _as ->
-      let (a, p, last_break) = try_eval_flat width tab i a p last_break in
-      let (_as, p, last_break) = try_eval_list_flat width tab i _as p last_break in
-      (a :: _as, p, last_break)
+      let (p, last_break) = try_eval_flat width tab i a p last_break in
+      let (p, last_break) = try_eval_list_flat width tab i _as p last_break in
+      (p, last_break)
 
   (* Eval "at best" a list of atoms using the "split only when necessary" policy. The [can_fail]
      flag controls if we can raise an [Overflow] or not. *)
@@ -123,9 +129,11 @@ module Atom = struct
     | a :: _as ->
       let (a, p, last_break) =
         (* If [Overflow] is possible we try in flat mode, else "at best". *)
-        if can_fail
-        then try_eval_flat width tab i a p last_break
-        else eval width tab i a p last_break in
+        if can_fail then
+          let (p, last_break) = try_eval_flat width tab i a p last_break in
+          (a, p, last_break)
+        else
+          eval width tab i a p last_break in
       let (_as, p, last_break) = try_eval_list_one width tab i _as p last_break can_fail can_nest in_nest in
       (a :: _as, p, last_break)
 
