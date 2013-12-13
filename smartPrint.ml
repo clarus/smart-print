@@ -49,11 +49,8 @@ module Atom = struct
       let (_as, p, last_break) =
         try let (p, last_break) = try_eval_list_flat width tab (i + tab) _as p last_break in
           (_as, p, last_break) with
-        | Overflow -> eval_list_all width i tab _as p last_break in
-      if can_nest then
-        (Indent (1, GroupAll (can_nest, _as)), p, last_break)
-      else
-        (GroupAll (can_nest, _as), p, last_break)
+        | Overflow -> eval_list_all width i tab _as p last_break can_nest in
+      (GroupAll (can_nest, _as), p, last_break)
     | Indent (n, a) ->
       let (a, p, last_break) = eval width tab (i + n * tab) a p last_break in
       (Indent (n, a), p, last_break)
@@ -139,20 +136,26 @@ module Atom = struct
       let (_as, p, last_break) = try_eval_list_one width tab i _as p last_break can_fail can_nest in_nest in
       (a :: _as, p, last_break)
 
-  (* Eval "at best" a list of atoms splitting all the spaces. *)
+  (* Eval "at best" a list of atoms splitting all the spaces. The flag [can_nest]
+     sets if we indent when we break lines. *)
   and eval_list_all (width : int) (tab : int) (i : int) (_as : t list) (p : int)
-    (last_break : Break.t option)
+    (last_break : Break.t option) (can_nest : bool)
     : t list * int * Break.t option =
     match _as with
     | [] -> (_as, p, last_break)
     | Break Break.Space :: _as ->
-      if last_break = None then
-        eval_list_all width tab i (Break Break.Newline :: _as) p last_break
-      else
-        eval_list_all width tab i _as p last_break
+      if last_break = None then (
+        let (_as, p, last_break) =
+          eval_list_all width tab (if can_nest then i + tab else i) _as 0 (Some Break.Newline) false in
+        if can_nest then
+          ([Break Break.Newline; Indent (1, GroupAll (false, _as))], p, last_break)
+        else
+          (Break Break.Newline :: _as, p, last_break)
+      ) else
+        eval_list_all width tab i _as p last_break can_nest
     | a :: _as ->
       let (a, p, last_break) = eval width tab i a p last_break in
-      let (_as, p, last_break) = eval_list_all width tab i _as p last_break in
+      let (_as, p, last_break) = eval_list_all width tab i _as p last_break can_nest in
       (a :: _as, p, last_break)
 
   (* Evaluate the breaks with a maximal [width] per line and a tabulation width [tab]. *)

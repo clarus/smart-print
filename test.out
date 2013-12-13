@@ -40,39 +40,21 @@ GroupOne (false,
   fdsgvbcvvfo
     (xffd xdsgsdg))
 *************************
-GroupOne (false, "[", Indent (1, GroupAll (true, Space, Space, Space, Space)), "]")
+GroupOne (false, "[", GroupAll (true, Space, Space, Space, Space), "]")
 *************************
 [ ]
 *************************
-GroupOne (false, "[", Indent (1, GroupAll (true, Space, Space, "x", ";", Space, Space, "y", Space, Space)), "]")
+GroupOne (false, "[", GroupAll (true, Space, Space, "x", ";", Space, Space, "y", Space, Space), "]")
 *************************
 [ x; y ]
 *************************
 GroupOne (false,
   "[",
-  Indent (1,
-    GroupAll (true,
-      Newline,
-      "kjh",
-      ";",
-      Newline,
-      "lj",
-      ";",
-      Newline,
-      "iop",
-      ";",
-      Newline,
-      "rt",
-      ";",
-      Newline,
-      "vbn",
-      ";",
-      Newline,
-      "hjk",
-      ";",
-      Newline,
-      "gkgytuuhi",
-      Newline)),
+  GroupAll (true,
+    Newline,
+    Indent (1,
+      GroupAll (false,
+        "kjh", ";", Newline, "lj", ";", Newline, "iop", ";", Newline, "rt", ";", Newline, "vbn", ";", Newline, "hjk", ";", Newline, "gkgytuuhi", Newline))),
   "]")
 *************************
 [
