@@ -283,11 +283,12 @@ Internally, documents are represented by a tree:
 type t =
   | String of string * int * int
   | Break of Break.t
-  | GroupOne of int * t list
-  | GroupAll of int * t list
+  | GroupOne of bool * t list
+  | GroupAll of bool * t list
+  | Indent of int * t
 ```
 
-Breaks can be spaces or newlines. During evaluation, spaces can be lifted to newlines to make each line shorter than the maximal width. They are two kinds of groups for two grouping policies: split only when necessary (default behavior), or try to print on one line else split everything. Each group can have an indentation level.
+Breaks can be spaces or newlines. During evaluation, spaces can be lifted to newlines to make each line shorter than the maximal width. They are two kinds of groups for two grouping policies: split only when necessary (default behavior), or try to print on one line else split everything. Each group can indent when spaces are broken.
 
 During printing, each space appearing after another space is ignored (no multiple space), as well as trailing spaces.
 
@@ -297,7 +298,7 @@ If you come from [PPrint](http://gallium.inria.fr/~fpottier/pprint/), here are s
 * `^^` stands for `^/^`
 * `^-^` stands for `^^`
 * spaces are collapsing
-* a `nest` is also a `group` (actually a `group` is just `nest 0`)
+* a `nest` is also a `group`, but indenting when spaces are broken
 * there are three printing modes: flat, on need (by default, split only when necessary) and all (like the normal mode of PPrint)
 
 Documentation
@@ -323,10 +324,11 @@ Text:
 * `lines : string -> t` Split a non-unicode string into lines at each newline.
 
 Indentation and grouping:
-* `nest : int -> t -> t` Indent a document, breaking spaces only when necessary.
-* `nest_all : int -> t -> t` Indent a document, breaking no space or all spaces if the line is full.
-* `group : t -> t` Like `nest 0`.
-* `group_all : t -> t` Like `nest_all 0`.
+* `indent : t -> t` Add one level of indentation.
+* `nest : int -> t -> t` Group a document, breaking spaces only when necessary. Indent when spaces are broken.
+* `nest_all : int -> t -> t` Group a document, breaking all spaces if the line is full. Indent when spaces are broken.
+* `group : t -> t` Group a document, breaking spaces only when necessary. Do not indent when spaces are broken.
+* `group_all : t -> t` Group a document, breaking all spaces if the line is full. Do not indent when spaces are broken.
 
 Enclosing:
 * `parens : t -> t` Enclose the document in parenthesis ( ).
@@ -353,7 +355,8 @@ A pretty-printer for the pretty-printer itself:
 * `Debug.pp_document_after_rendering : int -> t -> t` Pretty-print a document's structure after rendering (transformation of some spaces to newlines).
 
 Rendering:
-* `to_buffer : int -> Buffer.t -> t -> unit` Render a document in a buffer with a maximal width per line.
-* `to_string : int -> t -> string` Render a document in a string with a maximal width per line.
-* `to_out_channel : int -> out_channel -> t -> unit` Render a document in an output channel with a maximal width per line.
-* `to_stdout : int -> t -> unit` Render a document on `stdout` with a maximal width per line.
+* `to_something : int -> int -> (char -> unit) -> (string -> unit) -> (string -> int -> int -> unit) -> t -> unit` : Render a document with a maximal width per line and a tabulation size. Uses the functions `add_char`, `add_string` and `add_sub_string` given in parameters.
+* `to_buffer : int -> Buffer.t -> t -> unit` Render a document in a buffer with a maximal width per line and a tabulation size.
+* `to_string : int -> t -> string` Render a document in a string with a maximal width per line and a tabulation size.
+* `to_out_channel : int -> out_channel -> t -> unit` Render a document in an output channel with a maximal width per line and a tabulation size.
+* `to_stdout : int -> t -> unit` Render a document on stdout with a maximal width per line and a tabulation size.
