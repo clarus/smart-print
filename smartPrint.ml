@@ -367,7 +367,7 @@ module OCaml = struct
   let option (d : 'a -> t) (o : 'a option) : t =
     match o with
     | None -> !^ "None"
-    | Some x -> !^ "Some" ^^ nest (d x)
+    | Some x -> nest (!^ "Some" ^^ d x)
 
   let list (d : 'a -> t) (l : 'a list) : t =
     brakets @@ nest_all (space ^^ separate (!^ ";" ^^ space) (List.map d l) ^^ space)
