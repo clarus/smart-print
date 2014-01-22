@@ -11,12 +11,16 @@ Inspired by [PPrint](http://gallium.inria.fr/~fpottier/pprint/) of [François Po
 
 Install
 -------
-Download and run:
+Using the package manager [OPAM](http://opam.ocaml.org/):
+
+    $ opam install smart-print
+
+Else download the sources and run:
 
     $ make
     # make install
 
-You can also `make doc` and `make test`. To compile your program with SmartPrint:
+You can also `make doc` and `make test`. To compile your programs with SmartPrint:
 
     $ ocamlbuild my_program.native -libs smart_print
 
@@ -194,7 +198,7 @@ writes:
         (fdsgo (x xdsdg))) in
     y
 
-To display the `Tuple` we need repetition. It is possible to cheat using `OCaml.list`:
+To display the `Tuple` we need repetition. It is possible to cheat using `OCaml.list` to print a list in OCaml's syntax:
 
 ```ocaml
 let rec pp (e : t) : SmartPrint.t =

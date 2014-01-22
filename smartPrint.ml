@@ -1,3 +1,6 @@
+external (|>) : 'a -> ('a -> 'b) -> 'b = "%revapply";;
+external ( @@ ) : ('a -> 'b) -> 'a -> 'b = "%apply"
+
 (* Separators. *)
 module Break = struct
   (* A break can be a whitespace or a newline if the text has to be splited. *)
