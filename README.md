@@ -368,12 +368,14 @@ Lists:
 * `separate : t -> t list -> t` Concatenate the list of documents with no space but adding a separator in between. `separate sep [d1; ...; dn]` is like `d1 ^-^ sep ^-^ d2 ^-^ sep ... sep ^-^ dn`.
 
 OCaml values:
+* `OCaml.unit : unit -> t` Pretty-print the unit value.
 * `OCaml.bool : bool -> t` Pretty-print a `bool`.
 * `OCaml.int : int -> t` Pretty-print an `int`.
 * `OCaml.float : float -> t` Pretty-print a `float`.
 * `OCaml.string : string -> t` Pretty-print a `string`.
 * `OCaml.option : ('a -> t) -> 'a option -> t` Pretty-print an `option`.
 * `OCaml.list : ('a -> t) -> 'a list -> t` Pretty-print a `list`.
+* `OCaml.tuple : t list -> t` Pretty-print a tuple of values.
 
 A pretty-printer for the pretty-printer itself:
 * `Debug.pp_document : t -> t` Pretty-print a document's structure.

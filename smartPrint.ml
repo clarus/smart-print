@@ -355,6 +355,9 @@ let lines (s : string) : t =
     (split s (fun c -> c = '\n') 0 0)
 
 module OCaml = struct
+  let unit (_ : unit) : t =
+    !^ "()"
+
   let bool (b : bool) : t =
     !^ (string_of_bool b)
 
@@ -374,6 +377,9 @@ module OCaml = struct
 
   let list (d : 'a -> t) (l : 'a list) : t =
     brakets @@ nest_all (space ^^ separate (!^ ";" ^^ space) (List.map d l) ^^ space)
+
+  let tuple (ds : t list) : t =
+    parens @@ nest @@ separate (!^ "," ^^ space) ds
 end
 
 module Debug = struct

@@ -55,6 +55,7 @@ let main () =
   print_document @@ nest @@ lines "adipisicing elit,\n\nsed do eiusmod tempo incididunt ut labore et dolore";
   print_document @@ indent @@ nest @@ lines "adipisicing elit,\n\nsed do eiusmod tempo incididunt ut labore et dolore";
   print_document @@ indent @@ pp false @@ Let ("x", Var "x", Let ("x", Var "x", Var "y"));
-  print_document @@ pp false @@ App (Var "f", Let ("x", Var "x", Var "y"))
+  print_document @@ pp false @@ App (Var "f", Let ("x", Var "x", Var "y"));
+  print_document @@ OCaml.unit () ^^ OCaml.tuple [!^ "x"; OCaml.int 0]
 
 ;;main ()

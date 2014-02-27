@@ -94,6 +94,9 @@ val separate : t -> t list -> t
 (** {1 OCaml values} *)
 (** Pretty-printing of OCaml values. *)
 module OCaml : sig
+  (** Pretty-print the unit value. *)
+  val unit : unit -> t
+
   (** Pretty-print a [bool]. *)
   val bool : bool -> t
 
@@ -111,6 +114,9 @@ module OCaml : sig
 
   (** Pretty-print a [list]. *)
   val list : ('a -> t) -> 'a list -> t
+
+  (** Pretty-print a tuple of values. *)
+  val tuple : t list -> t
 end
 
 (** {1 Debugging} *)
