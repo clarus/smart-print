@@ -1,6 +1,6 @@
 SmartPrint
 ==========
-*The pretty-printing library which feels natural to use.*
+A simple pretty-printing library.
 
 Inspired by [PPrint](http://gallium.inria.fr/~fpottier/pprint/) of [François Pottier](http://pauillac.inria.fr/~fpottier/) and [Nicolas Pouillard](http://nicolaspouillard.fr/). What it gives you:
 * a generic pretty-printing library in OCaml
