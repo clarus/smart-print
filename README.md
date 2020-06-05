@@ -20,9 +20,8 @@ Else download the sources and run:
     $ make
     # make install
 
-You can also `make doc` and `make test`. To compile your programs with SmartPrint:
-
-    $ ocamlbuild my_program.native -libs smart_print
+You can also `make doc` and `make test`. To compile your programs with SmartPrint
+add `smart-print` to the `libraries` stanza in your `dune` file(s).
 
 Do not forget to open the SmartPrint module in your code:
 
@@ -40,7 +39,7 @@ Open an OCaml toplevel:
 
 ```ocaml
 #use "topfind";;
-#require "smart_print";;
+#require "smart-print";;
 open SmartPrint;;
 ```
 

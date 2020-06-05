@@ -1,2 +1,4 @@
-(lang dune 1.0)
-(name smart-print)
+(lang dune 2.0)
+(package
+  (name smart-print)
+  (deprecated_package_names smart_print))
