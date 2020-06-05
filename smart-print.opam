@@ -9,8 +9,8 @@ license: "BSD-3-Clause"
 
 depends: [
   "ocaml" {>= "4.00.0"}
-  "ocamlfind" {build}
-  "ocamlbuild" {build}
+  "dune" {>= 1.0}
+  "odoc" {with-doc}
 ]
 build: make
 dev-repo: "git://github.com/clarus/smart-print"

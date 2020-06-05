@@ -1,0 +1,11 @@
+(library
+ (name smart_print)
+ (wrapped false)
+ (public_name smart_print)
+ (modules smartPrint)
+ (synopsis "SmartPrint pretty-printing library"))
+
+(test
+  (name test)
+  (libraries smart_print)
+  (modules test))
