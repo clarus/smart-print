@@ -1,0 +1,15 @@
+(library
+ (name smart_print)
+ (wrapped false)
+ (public_name smart-print)
+ (modules smartPrint)
+ (synopsis "SmartPrint pretty-printing library"))
+
+(deprecated_library_name
+ (old_public_name smart_print)
+ (new_public_name smart-print))
+
+(test
+  (name test)
+  (libraries smart_print)
+  (modules test))

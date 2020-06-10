@@ -1,18 +1,17 @@
 default:
-	ocamlbuild smartPrintLib.cma smartPrintLib.cmxa
+	dune build --profile release
 
 install: default
-	ocamlfind install smart_print META _build/smartPrint.cmi _build/smartPrint.cmx _build/smartPrintLib.a _build/smartPrintLib.cma _build/smartPrintLib.cmxa _build/smartPrintLib.mllib
+	dune install
 
 uninstall:
-	ocamlfind remove smart_print
+	dune uninstall
 
 clean:
-	ocamlbuild -clean
+	dune clean
 
 doc:
-	ocamlbuild smartPrint.docdir/index.html
+	dune build @doc --profile release
 
-test: default
-	ocamlbuild test.native
-	./test.native |diff -s - test.out
+test:
+	dune runtest --profile release
